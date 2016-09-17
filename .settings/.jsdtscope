@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="**/bower_components/*|**/node_modules/*|libs/jquery/|libs/evothings/ui/|**/*.min.js|libs/evothings/" kind="src" path=""/>
+	<classpathentry excluding="ui/|**/bower_components/*|**/node_modules/*|**/*.min.js" kind="src" path="libs/evothings"/>
+	<classpathentry excluding="**/bower_components/*|**/node_modules/*|**/*.min.js" kind="src" path="libs/evothings/ui"/>
+	<classpathentry excluding="**/bower_components/*|**/node_modules/*|**/*.min.js" kind="src" path="libs/jquery"/>
+	<classpathentry kind="con" path="org.eclipse.wst.jsdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path=""/>
+</classpath>
