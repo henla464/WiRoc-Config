@@ -2,17 +2,120 @@
 <html>
 
 <head>
-
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, user-scalable=no,
 		shrink-to-fit=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
 
 	<title>WiRoc Config</title>
 
+ 	
 	<style>
+		@import 'ui/css/jquery.mobile-1.4.5.css';
+	</style> 
+    <style>
 		@import 'ui/css/evothings-app.css';
 	</style>
+	
+    <style>
+        /* Visible channel */
+    	#channel-select-button span {
+    		font-size: 20vw;
+    	}
+    	/* Channel list */
+    	#channel-select-menu li a {
+    		font-size: 4vw;
+    		padding-top:0.5em;
+    		padding-bottom:0.5em;
+    	}
+    	
+    	label.default-channel {
+		line-height: 16vw;
+    		font-size: 10vw;
+    		text-align: center;
+    		margin-bottom: -1vw;
+		height: 16vw;
+    		/*transition: font-size 1s;*/
+    	}
+	label.custom-channel {
+		line-height: 16vw;
+    		font-size: 7vw;
+    		text-align: center;
+    		margin-bottom: -1vw;
+		height: 16vw;
+    		/*transition: font-size 1s;*/
+    	}
+    	.ui-select {
+    		margin-top: 0px;
+    	}
+    	.ui-field-contain {
+    		width: 40%;
+    		margin: auto;
+    		margin-top:0px;
 
+    	}
+    	
+    	 div.ui-controlgroup-label legend
+    	 {
+			margin-left:auto;
+			margin-right:auto;
+		 }
+		
+		
+    	.ui-mobile [data-role=page] {
+			position: inherit;
+		}
+		
+		div.ui-checkbox {
+		    display: inline-block;
+		}
+		
+		#acknowledge-div {
+			text-align:center;
+		}
+		
+		.ui-controlgroup-label {
+			text-align:center;
+		}
+		
+		.ui-controlgroup-horizontal {
+			text-align:center;
+		}
+		
+		
+		div.ui-controlgroup-controls {
+		  	font-weight: normal;
+			font-size: 16px;
+		 }
+		 
+		.datarate div.ui-controlgroup-label{
+		 	font-size: 3vw;
+		 	margin: 0;
+		}
+
+		.datarate-disabled div.ui-controlgroup-label{
+			opacity:0.4;
+		}
+
+		
+		fieldset.ui-controlgroup {
+			margin: .4em 0;
+		}
+
+		.scan-status {
+			font-size:3vw;
+		}
+		p {
+		    -webkit-margin-before: 1.5vw;
+		    -webkit-margin-after: 1.5vw;
+		    -webkit-margin-start: 0px;
+		    -webkit-margin-end: 0px;
+		}
+		.page {
+			margin-left:2vw;
+			margin-right:2vw;
+		}
+    	
+    </style>
 	<script>
 	// Redirect console.log to Evothings Workbench.
 		if (window.hyper && window.hyper.log) { console.log = hyper.log }
@@ -20,63 +123,102 @@
 
 	<script src="cordova.js"></script>
 	<script src="libs/jquery/jquery.js"></script>
+	<script src="libs/jquery/jquery.mobile-1.4.5.js"></script>
 	<script src="libs/evothings/evothings.js"></script>
 	<script src="libs/evothings/ui/ui.js"></script>
 	<script src="app.js"></script>
-
 	<script>
 		$(document).ready(function() {
-			}	
-		);
+			$('#page-device-scan').show();
+			$('#page-basic-config').hide();
+
+			$("input[name='radio-choice-channel-type']").bind( "change", function(event, ui) {
+				//alert(this.value);
+							
+				if (this.value == 'custom') {
+					app.ui.onShowCustomChannelPage();
+				} else {
+					app.ui.onShowPredefinedChannelPage();
+				}
+			});
+		});
 	</script>
 </head>
 
 <body ontouchstart=""><!-- ontouchstart="" enables low-delay CSS transitions. -->
 
-	<header>
-		<button class="back" onclick="history.back()">
-			<img src="ui/images/arrow-left.svg" />
-		</button>
+	<div data-role="header" data-position="fixed">
+	  <h1>WiRoc Config</h1>
+	</div>
 
-		<img class="logotype" src="ui/images/logo.svg" alt="Evothings" />
+	<div id="page-device-scan" class="page">
+	
+		<a href="#" onclick="app.ui.onStartScanButton()" class="button start-button">
+			START SCAN
+		</a>
+	
+		<a href="#" onclick="app.ui.onStopScanButton()" class="button stop-button">
+			STOP SCAN
+		</a>
+	
+		<p id="scan-status" class="scan-status">Scanning Paused</p>
+	
+		<ul id="found-devices" class="dynamic"></ul>
+	</div>
+	<div id="page-basic-config" class="page">
+        <form>
+    
+          <h1 id="device-name"></h1>
 
-		<button id="menu-button" tabindex="0" onclick="this.focus()">
-			<img src="ui/images/menu.svg" />
-		</button>
-
-		<menu>
-			<menuitem>
-				<a href="#">Home</a>
-			</menuitem>
-
-			<menuitem>
-				<a href="#troubleshooting">Troubleshooting</a>
-			</menuitem>
-		</menu>
-	</header>
-
-	<h1>WiRoc Configure</h1>
-
-	<button onclick="app.ui.onStartScanButton()" class="button start-button">
-		START SCAN
-	</button>
-
-	<button onclick="app.ui.onStopScanButton()" class="button stop-button">
-		STOP SCAN
-	</button>
-
-	<p id="scan-status">Scanning Paused</p>
-
-	<ul id="found-devices" class="dynamic"></ul>
-
-	<section id='troubleshooting'>
-
-		<h2>Troubleshooting</h2>
-
-		<p>Sometimes BLE stops working when switching between apps or doing multiple reloads. In this case restart the Evothings Client app. Additionally, you can use the Evothings Workbench Tools to see any error messages that may help in your investigation.</p>
-
-	</section>
-
+		  <div data-role="main" class="ui-content">
+			<div>
+				<fieldset data-role="controlgroup" data-type="horizontal">
+					<input type="radio" name="radio-choice-channel-type" id="radio-choice-channel-type-default" value="default" checked="checked"><label for="radio-choice-channel-type-default">Predefined channel</label>
+					<input type="radio" name="radio-choice-channel-type" id="radio-choice-channel-type-custom" value="custom"><label for="radio-choice-channel-type-custom">Custom channel</label>
+				</fieldset>
+			</div>
+		      <label id="channel-header" class="default-channel">Channel</label>
+		      <div class="ui-field-contain">
+		        <select name="channel" id="channel-select" data-native-menu="false">
+                          <option value="1">1</option>
+		          <option value="2">2</option>
+		          <option value="3">3</option>
+		          <option value="4">4</option>
+		          <option value="5">5</option>
+		          <option value="6">6</option>
+		          <option value="7">7</option>
+		          <option value="8">8</option>
+		          <option value="9">9</option>
+		        </select>
+		      </div>
+		     
+			<div id="acknowledge-div">
+ 				<label><input type="checkbox" id="acknowledgement">Request acknowledgement</label>
+			</div>
+			<div>
+			<fieldset data-role="controlgroup" data-type="horizontal" class="datarate datarate-disabled">
+				<legend>Data rate</legend>
+				<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-1" value="146" disabled="disabled"><label for="radio-choice-data-rate-1">146 bps</label>
+				<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-2" value="293" disabled="disabled"><label for="radio-choice-data-rate-2">293 bps</label>
+				<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-3" value="586" disabled="disabled" checked="checked"><label for="radio-choice-data-rate-3">586 bps</label>
+				<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-4" value="2148" disabled="disabled"><label for="radio-choice-data-rate-4">2148 bps</label>
+				<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-5" value="7032" disabled="disabled"><label for="radio-choice-data-rate-5">7032 bps</label>
+			</fieldset>
+			</div>
+			  <div style="text-align:center">
+				  <div style="display:inline-block">
+				  	<a href="#" onclick="app.ui.onReadBasicButton()" class="button read-basic-button">
+						READ
+					</a>
+		
+					<a href="#" onclick="app.ui.onApplyBasicButton()" class="button apply-basic-button">
+						APPLY SETTINGS
+					</a>
+				  </div>
+			  </div>
+  		  </div>
+		</form>
+	</div>
 </body>
 
 </html>
