@@ -1,276 +1,8 @@
 
 
-
-/*  ----------------------------------------------------------
-								SECTIONS
-	---------------------------------------------------------- */
-
-main {
-	z-index: 0;
+a.button:visited {
+	color:white;
 }
-
-
-section {
-	display: none;
-
-	box-sizing: border-box; /* Width & height includes padding & border. */
-
-	position: absolute;
-
-	top: 0;
-	right: 0;
-	bottom: 0;
-	left: 0;
-
-	width: 100%;
-
-	padding: 0 0.9em 0 0.9em;
-
-	background-color: #fff;
-
-	z-index: 2;
-
-}
-
-section:target {
-	display: block;
-}
-
-
-
-/*  ----------------------------------------------------------
-							INPUT FIELDS
-	---------------------------------------------------------- */
-
-input {
-	margin: 0;
-	padding: 0;
-
-	border: none;
-
-	font-family: inherit;
-	font-size: 63%;
-}
-
-input[type="text"],input[type="url"],input[type="tel"],input[type="password"],
-input[type="email"],input[type="search"],input[type="number"],
-input[type="date"],input[type="month"],input[type="week"],input[type="time"] {
-	width: 50%;
-
-	padding: 7px 14px 7px 14px;
-
-	font-family: inherit;
-	font-size: 63%;
-	color: #000;
-
-	border-radius: 4px;
-	border: none;
-
-	background-color: #f3f3f3; /* Default color: "Arctic". */
-}
-
-textarea {
-	box-sizing: border-box; /* Width & height includes padding & border. */
-	width: 100%;
-
-	padding: 7px 14px 7px 14px;
-
-	border-radius: 4px;
-	border: none;
-
-	font-family: inherit;
-	font-size: 63%;
-	line-height: 1.5;
-
-	background-color: #f3f3f3; /* Default color: "Arctic". */
-}
-
-
-
-
-/*  ----------------------------------------------------------
-								BUTTONS
-	---------------------------------------------------------- */
-
-button.clear {
-	margin-left: 1%;
-	background-color: #e15a64; /* Default color: "Soft Red". */
-}
-
-button,
-input.btn-group + label,
-.button {
-	display: inline-block;
-	box-sizing: border-box; /* Width & height includes padding & border. */
-
-	font-family: 'Proxima Nova Black';
-	font-size: inherit;
-	line-height: 100%;
-	text-align: center;
-	text-transform: uppercase;
-
-	color: #fff;
-
-	margin: 0.5em 0 0.5em 0;
-	padding: 9px 13px 8px 13px;
-
-	border-radius: 4px;
-	border: none;
-
-	box-shadow: none;
-
-	background-color: #b9b9b9; /* Default color: "Charcoal" */
-}
-body > button,
-body > input.btn-group + label,
-main > button,
-main > input.btn-group + label {
-	font-size: 63% !important;
-}
-button:active, button.pressed,
-input.btn-group:active + label, input.btn-group + label:active,
-input.btn-group:checked + label {
-	box-shadow: inset 0 8px 9px -9px #000;
-	background-color: #9d9d9d; /* Default color: "Charcoal" */
-}
-button:focus,
-input.btn-group:focus {
-	outline: none;
-}
-
-button.half,
-input.btn-group.half + label,
-input.btn-group + label.half {
-	float: left;
-	width: 50%; /* Fallback in case calc() is unsupported. */
-	width: calc(50% - 4px);
-	margin-left: 2px;
-	margin-right: 2px;
-}
-
-button.third,
-input.btn-group.third + label,
-input.btn-group + label.third {
-	float: left;
-	width: 33%; /* Fallback in case calc() is unsupported. */
-	width: calc(33% - 4px);
-	margin-left: 2px;
-	margin-right: 2px;
-}
-
-button.quarter,
-input.btn-group.quarter + label,
-input.btn-group + label.quarter {
-	float: left;
-	width: 25%; /* Fallback in case calc() is unsupported. */
-	width: calc(25% - 4px);
-	margin-left: 2px;
-	margin-right: 2px;
-}
-
-button.wide,
-input.btn-group.wide + label,
-input.btn-group + label.wide {
-	width: 100%;
-}
-
-button.big,
-input.btn-group.big + label,
-input.btn-group + label.big {
-	font-size: 150%;
-	line-height: 3.0;
-}
-
-/*  Input with class btn-group should be accompanied by a label acting as a
-	button. */
-input.btn-group {
-	display: none;
-}
-
-
-
-
-table {
-	table-layout: fixed;
-	width: 100%;
-	font-size: 63%;
-	text-align: left;
-}
-thead {
-	font-family: 'Proxima Nova Bold';
-}
-
-strong {
-	font-family: 'Proxima Nova Bold';
-}
-
-code {
-	font-size: inherit;
-}
-
-ol,ul {
-	list-style-type: none;
-	list-style-position: inside;
-	counter-reset: item;
-
-	margin: 0.5em 0 0 0;
-	padding: 0;
-
-	font-size: 63%;
-}
-ol li, ul li {
-	padding: 0.5em 0 0.5em 0;
-
-	font-size: inherit;
-	line-height: 1.5;
-}
-ol li:before {
-	content: counter(item) ". ";
-	counter-increment: item;
-	font-family: 'Proxima Nova Bold';
-}
-ul.dynamic {
-	list-style-type: none;
-	padding: 0;
-}
-ul.dynamic li {
-	padding: 4% 15% 4% 4%;
-
-	border-radius: 4px;
-	border: none;
-
-	box-shadow: inset 0 -7px 12px -12px #000;
-
-	background-color: #e3e3e3;
-}
-ul.dynamic li:last-child {
-	box-shadow: none;
-}
-ul.dynamic li a {
-	color: #000;
-}
-ul.dynamic.arrow li,
-ul.dynamic li.arrow {
-	background-image: url('../images/arrow-right.svg');
-	background-position: 94% center; /* CSS 2 fallback */
-	background-position: right 5% center; /* requires CSS 3 */
-	background-size: 1em auto;
-	background-repeat: no-repeat;
-}
-
-article {
-	display: none;
-	z-index: 2;
-
-	font-size: 100%;
-}
-
-
-
-
-/*  ----------------------------------------------------------
-								COLORS
-	---------------------------------------------------------- */
 
 a.button {
   display: inline-block;
@@ -280,7 +12,8 @@ a.button {
   outline: none;
   color: #fff;
   border: none;
-  width: inherit;
+  width: initial;
+  margin: 0.5em 0 0.5em 0;
 }
 
 a.button.start-button,
@@ -288,7 +21,7 @@ a.button.stop-button,
 a.button.read-basic-button,
 a.button.apply-basic-button {
   padding: 15px 25px;
-  font-size: 24px;
+  font-size: 4vw;
   border-radius: 15px;
   box-shadow: 0 9px #999;
 }
@@ -298,7 +31,7 @@ a.button.connect-button {
   padding-bottom: 12px;
   padding-left: 20px;
   padding-right: 20px;
-  font-size: 20px;
+  font-size: 3.5vw;
   border-radius: 10px;
   box-shadow: 0 7px #999;
   margin-top:-3px;

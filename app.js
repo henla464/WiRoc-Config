@@ -9,10 +9,16 @@ var app = {};
 app.devices = {};
 app.connectedDevice = null;
 app.radioService = 'f6026b69-9254-fd82-0242-60d9aaff57dc';
-app.radioService2 = 'dc57ffaa-d960-4202-82fd-5492696b02f6';
-app.radioChannelCharacteristic = 'dc57ffab-d960-4202-82fd-5492696b02f6';
+app.radioService2 =                      'dc57ffaa-d960-4202-82fd-5492696b02f6';
+app.radioChannelCharacteristic =         'dc57ffab-d960-4202-82fd-5492696b02f6';
 app.radioAcknowledgementCharacteristic = 'dc57ffac-d960-4202-82fd-5492696b02f6';
-app.radioDataRateCharacteristic = 'DC57FFAE-D960-4202-82FD-5492696B02F6';
+app.radioDataRateCharacteristic =        'dc57ffad-d960-4202-82fd-5492696b02f6';
+app.meosService = '6e30b300-be1b-401c-8a6d-1a59d5c23c64';
+app.sendToMeosEnabledCharacteristic =         	'6e30b301-be1b-401c-8a6d-1a59d5c23c64';
+app.sendToMeosIPCharacteristic = 		'6e30b302-be1b-401c-8a6d-1a59d5c23c64';
+app.sendToMeosIPPortCharacteristic =        	'6e30b303-be1b-401c-8a6d-1a59d5c23c64';
+app.batteryService = '0000180f-0000-1000-8000-00805f9b34fb';
+app.batteryLevelCharacteristic =         	'00002a19-0000-1000-8000-00805f9b34fb';
 // UI methods.
 app.ui = {};
 
@@ -37,9 +43,12 @@ app.onDeviceReady = function()
 
 app.ui.showPredefinedChannelPage = function()
 {
+	$("#radio-choice-channel-type-custom").prop("checked",false).checkboxradio("refresh");
+	$("#radio-choice-channel-type-default").prop("checked",true).checkboxradio("refresh");
+
 	$('#channel-header').removeClass('custom-channel');
 	$('#channel-header').addClass('default-channel');
-	$(this).text('Channel');
+	$('#channel-header').text('Channel');
 	$("#radio-choice-data-rate-1").prop("checked",false).checkboxradio("refresh");
 	$("#radio-choice-data-rate-2").prop("checked",false).checkboxradio("refresh");
 	$("#radio-choice-data-rate-4").prop("checked",false).checkboxradio("refresh");
@@ -63,9 +72,12 @@ app.ui.onShowPredefinedChannelPage = function()
 
 app.ui.showCustomChannelPage = function()
 {
+	$("#radio-choice-channel-type-default").prop("checked",false).checkboxradio("refresh");
+	$("#radio-choice-channel-type-custom").prop("checked",true).checkboxradio("refresh");
+
 	$('#channel-header').removeClass('default-channel');
 	$('#channel-header').addClass('custom-channel');
-	$(this).text('Frequency channel');
+	$('#channel-header').text('Frequency channel');
    	$("#radio-choice-data-rate-1").checkboxradio("enable");
 	$("#radio-choice-data-rate-2").checkboxradio("enable");
 	$("#radio-choice-data-rate-4").checkboxradio("enable");
@@ -192,9 +204,9 @@ app.ui.displayDeviceList = function()
 
 			// Create tag for device data.
 			var element = $(
-				'<li style="padding:10px">'
+				'<li style="padding:10px" class="device">'
 				+	'<strong>' + device.name + '</strong>'
-				+   '<a href="#" style="float:right" class="button connect-button">Connect &gt;</a>'
+				+   '<a href="#" style="float:right" class="button connect-button">CONNECT &gt;</a>'
 				+   '<table style="border:0px;padding:0px;width:100%;">'
 				+     '<tr>'
 				+       '<td style="white-space:nowrap;">Bluetooth addr:</td>'
@@ -273,12 +285,6 @@ app.writeChannel = function(callback)
 			});
 };
 
-app.ui.displayAcknowledgementRequested = function(acknowledgement)
-{
-	var raw = new DataView(acknowledgement).getUint8(0, true);
-	console.log('ack: ' + raw);
-	$('#acknowledgement').prop("checked",raw != 0).checkboxradio("refresh");
-};
 
 //---- ack
 
@@ -314,15 +320,22 @@ app.writeAcknowledgementRequested = function(callback)
 			});
 };
 
+app.ui.displayAcknowledgementRequested = function(acknowledgement)
+{
+	var raw = new DataView(acknowledgement).getUint8(0, true);
+	console.log('ack: ' + raw);
+	$('#acknowledgement').prop("checked",raw != 0).checkboxradio("refresh");
+};
+
 //-- data rate
 app.getDataRate = function(callback)
 {
-	console.log('getchannel');
+	console.log('getdatarate');
 	app.connectedDevice.readCharacteristic(
 			app.radioService2,
 			app.radioDataRateCharacteristic,
-		    function(channel) {
-				callback(channel);
+		    function(dataRate) {
+				callback(dataRate);
 			},
 		    function(error) {
 				alert(error);
@@ -341,7 +354,7 @@ app.writeDataRate = function(callback)
 	app.connectedDevice.writeCharacteristic(
 			app.radioService2,
 			app.radioDataRateCharacteristic,
-			new Uint8Array([dataRate]),
+			new Uint16Array([dataRate]),
 		    callback,
 		    function(error) {
 				alert(error);
@@ -350,22 +363,199 @@ app.writeDataRate = function(callback)
 
 app.ui.displayDataRate = function(dataRate)
 {
-	var raw = new DataView(dataRate).getUint16(0, true);
-	console.log('data rate: ' + raw);
-	$(".datarate [type='radio'][value = '" + datarate + "']").prop("checked", true).checkboxradio("refresh");
-	$(".datarate [type='radio']").not( "[value = '" + datarate + "']").prop("checked", false).checkboxradio("refresh");
-	if (datarate == 586) {
+	var rawDataRate = new DataView(dataRate).getUint16(0, true);
+	console.log('data rate: ' + rawDataRate);
+	$(".datarate [type='radio'][value = '" + rawDataRate + "']").prop("checked", true).checkboxradio("refresh");
+	$(".datarate [type='radio']").not( "[value = '" + rawDataRate + "']").prop("checked", false).checkboxradio("refresh");
+	if (rawDataRate == 586) {
 		app.ui.showPredefinedChannelPage();
 	} else {
 		app.ui.showCustomChannelPage();
 	}
 };
 
+//-- Battery
+
+app.getBatteryLevel = function(callback)
+{
+	console.log('getBatteryLevel');
+	app.connectedDevice.readCharacteristic(
+			app.batteryService,
+			app.batteryLevelCharacteristic,
+		    function(batteryLevel) {
+				console.log(batteryLevel);
+				callback(batteryLevel);
+			},
+		    function(error) {
+				alert(error);
+			});
+
+};
+
+
+app.ui.displayBatteryLevel = function(batteryLevel)
+{
+	var rawBatteryLevel = new DataView(batteryLevel).getUint8(0, true);
+	console.log('battery level: ' + rawBatteryLevel);
+
+	levelBar = $('.level');
+	var isCharging = false;
+	levelBar.removeClass('high');
+	levelBar.removeClass('med');
+	levelBar.removeClass('low');
+	if (isCharging) {
+	  levelBar.addClass('charging');
+	} else if (rawBatteryLevel > 60) {
+	  levelBar.addClass('high');
+	} else if (rawBatteryLevel >= 30 ) {
+	  levelBar.addClass('med');
+	} else {
+	  levelBar.addClass('low');
+	};
+	levelBar.css('width', rawBatteryLevel + '%');
+
+	var label = $('#batterylabel');
+	label.text(rawBatteryLevel+"%");
+};
+
+
+//-- Send to Meos enabled
+app.getSendToMeosEnabled = function(callback)
+{
+	console.log('getSendToMeosEnabled');
+	app.connectedDevice.readCharacteristic(
+			app.meosService,
+			app.sendToMeosEnabledCharacteristic,
+		    function(meosEnabled) {
+				callback(meosEnabled);
+			},
+		    function(error) {
+				alert(error);
+			});
+};
+
+app.ui.getSendToMeosEnabled = function() {
+	return $('#sendtomeosenabled').prop("checked") ? 1 : 0;
+}
+
+app.writeSendToMeosEnabled = function(callback)
+{
+	console.log('write send to meos enabled');
+	var meosEnabled = app.ui.getSendToMeosEnabled();
+	app.connectedDevice.writeCharacteristic(
+			app.meosService,
+			app.sendToMeosEnabledCharacteristic,
+			new Uint8Array([meosEnabled]),
+		    callback,
+		    function(error) {
+				alert(error);
+			});
+};
+
+app.ui.displaySendToMeosEnabled = function(meosEnabled)
+{
+	var raw = new DataView(meosEnabled).getUint8(0, true);
+	console.log('send to meos enabled: ' + raw);
+	$('#sendtomeosenabled').prop("checked",raw != 0).checkboxradio("refresh");
+};
+
+
+//-- Send to Meos ip
+app.getSendToMeosIP = function(callback)
+{
+	console.log('getSendToMeosIP');
+	app.connectedDevice.readCharacteristic(
+			app.meosService,
+			app.sendToMeosIPCharacteristic,
+		    function(meosIP) {
+				callback(meosIP);
+			},
+		    function(error) {
+				alert(error);
+			});
+};
+
+app.ui.getSendToMeosIP = function() {
+	var meosIP = $("#sendtomeosip").val();
+	return meosIP;
+}
+
+app.writeSendToMeosIP = function(callback)
+{
+	console.log('write meos ip');
+	var meosIP = app.ui.getSendToMeosIP();
+	var te = new TextEncoder("utf-8").encode(meosIP);
+	var meosIPArray = new Uint8Array(te);
+
+	app.connectedDevice.writeCharacteristic(
+			app.meosService,
+			app.sendToMeosIPCharacteristic,
+			meosIPArray,
+			callback,
+		    function(error) {
+				alert(error);
+			});
+};
+
+app.ui.displaySendToMeosIP = function(meosIP)
+{
+	var meosIPString = new TextDecoder("utf-8").decode(meosIP);
+	console.log('meos ip: ' + meosIPString);
+	$("#sendtomeosip").val(meosIPString);
+};
+
+//-- Send to Meos ip
+app.getSendToMeosIPPort = function(callback)
+{
+	console.log('getSendToMeosIPPort');
+	app.connectedDevice.readCharacteristic(
+			app.meosService,
+			app.sendToMeosIPPortCharacteristic,
+		    function(meosIPPort) {
+				callback(meosIPPort);
+			},
+		    function(error) {
+				alert(error);
+			});
+};
+
+app.ui.getSendToMeosIPPort = function() {
+	var meosIPPort = $("#sendtomeosipport").val();
+	return meosIPPort;
+}
+
+app.writeSendToMeosIPPort = function(callback)
+{
+	console.log('write meos ip port');
+	var meosIPPort = parseInt(app.ui.getSendToMeosIPPort());
+	app.connectedDevice.writeCharacteristic(
+			app.meosService,
+			app.sendToMeosIPPortCharacteristic,
+			new Uint16Array([meosIPPort]),
+		    callback,
+		    function(error) {
+				alert(error);
+			});
+};
+
+app.ui.displaySendToMeosIPPort = function(meosIPPort)
+{
+	var rawMeosIPPort = new DataView(meosIPPort).getUint16(0, true);
+	console.log('meos ip port: ' + rawMeosIPPort);
+	$("#sendtomeosipport").val(rawMeosIPPort);
+};
+
 //--
 
+app.readBasicSettings = function() {
+	app.getBatteryLevel(app.ui.displayBatteryLevel);
+	app.getDataRate(app.ui.displayDataRate);
+	app.getChannel(app.ui.displayChannel);
+	app.getAcknowledgementRequested(app.ui.displayAcknowledgementRequested);
+}
+
 app.ui.onReadBasicButton = function() {
-    app.getChannel(app.ui.displayChannel);
-    app.getAcknowledgementRequested(app.ui.displayAcknowledgementRequested);
+	app.readBasicSettings();
 }
 
 app.ui.onApplyBasicButton = function() {
@@ -373,6 +563,33 @@ app.ui.onApplyBasicButton = function() {
 		app.writeAcknowledgementRequested(function() {
 			app.writeDataRate(function() {
 				alert('success');
+				app.getChannel(app.ui.displayChannel);
+				app.getAcknowledgementRequested(app.ui.displayAcknowledgementRequested);
+				app.getDataRate(app.ui.displayDataRate);
+			});
+		});
+	});
+}
+
+app.readAdvancedSettings = function() {
+	app.getBatteryLevel(app.ui.displayBatteryLevel);
+	app.getSendToMeosEnabled(app.ui.displaySendToMeosEnabled);
+	app.getSendToMeosIP(app.ui.displaySendToMeosIP);
+	app.getSendToMeosIPPort(app.ui.displaySendToMeosIPPort);
+}
+
+app.ui.onReadAdvancedButton = function() {
+	app.readAdvancedSettings();
+}
+
+app.ui.onApplyAdvancedButton = function() {
+	app.writeSendToMeosEnabled(function() {
+		app.writeSendToMeosIP(function() {
+			app.writeSendToMeosIPPort(function() {
+				alert('success');
+				app.getSendToMeosEnabled(app.ui.displaySendToMeosEnabled);
+				app.getSendToMeosIP(app.ui.displaySendToMeosIP);
+				app.getSendToMeosIPPort(app.ui.displaySendToMeosIPPort);
 			});
 		});
 	});
@@ -388,19 +605,15 @@ app.connect = function(device)
 	device.connect(function(device)
 	{
 		app.connectedDevice = device;
-		
 		console.log('Connected');
-		$('#page-device-scan').hide();
-		$('#page-basic-config').show();
+		$(":mobile-pagecontainer").pagecontainer( "change", "#page-basic-config", { } );
 		$('#device-name').text(device.name);
 		
 		device.readServices(function(device)
 			{
 			    console.log('Read services completed: ' + JSON.stringify(device));
 			    // We can now read/write to the device.
-			    app.getChannel(app.ui.displayChannel);
-			    app.getAcknowledgementRequested(app.ui.displayAcknowledgementRequested);
-			    app.getDataRate(app.ui.displayDataRate);
+			    app.readBasicSettings();
 			},
 			function(error)
 			{
@@ -411,7 +624,7 @@ app.connect = function(device)
 		console.log('after readservices');
 	}, function(errorCode)
 	{
-		if (error == evothings.easyble.error.DISCONNECTED)
+		if (errorCode == evothings.easyble.error.DISCONNECTED)
 	    {
 	        console.log('Device disconnected')
 	    }
@@ -424,6 +637,12 @@ app.connect = function(device)
 	);
 };
 
-
+app.disconnect = function()
+{
+	if (app.connectedDevice) {
+		console.log('disconnect');
+		app.connectedDevice.close();
+	}
+};
 
 app.initialize();
