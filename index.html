@@ -132,6 +132,12 @@
 		}
 		.device {
 			font-size: 5vw;
+			background-color:#e9e9e9;
+			list-style-type: none;
+		}
+
+		#found-devices {
+			padding-left: 0;
 		}
 
 		#battery-indicator {
@@ -277,7 +283,7 @@
 		$(document).ready(function() {
 			//$('#page-device-scan').show();
 			//$('#page-basic-config').show();
-			app.getBatteryLevel(app.ui.displayBatteryLevel);
+			//app.getBatteryLevel(app.ui.displayBatteryLevel);
 
 			$("input[name='radio-choice-channel-type']").bind( "change", function(event, ui) {
 				//alert(this.value);
@@ -328,6 +334,32 @@
 
 			// about link
 			$( "#popup-about-link" ).on("click", function (event, ui) { $( "#popup-about" ).popup( "open" ); return false; });
+
+		// Create tag for device data.
+			var element = $(
+				'<li style="padding:10px" class="device">'
+				+	'<strong>wiroc device</strong>'
+				+   '<a href="#" style="float:right" class="button connect-button">CONNECT &gt;</a>'
+				+   '<table style="border:0px;padding:0px;width:100%;">'
+				+     '<tr>'
+				+       '<td style="white-space:nowrap;">Bluetooth addr:</td>'
+				+       '<td>10.10.10.10</td>'
+				+     '</tr>'
+				+     '<tr>'
+				+       '<td style="white-space:nowrap;">Signal 90 dBm</td>'
+				+       '<td style="background:rgb(150,150,150);margin:0px;padding:4px">'
+				+          '<div style="background:rgb(225,0,0);height:20px;width:90%;"></div>'
+				+       '</td>'
+				+     '</tr>'
+				+   '</table>'
+				+ '</li>'
+			);
+			
+			element.find('a.button').bind("click",
+				{address: '10.10.10.10', name: 'wiroc'},
+				app.ui.onConnectButton);
+
+			$('#found-devices').append(element);
 		});
 	</script>
 </head>

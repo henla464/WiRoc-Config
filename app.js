@@ -262,7 +262,7 @@ app.getChannel = function(callback)
 				callback(channel);
 			},
 		    function(error) {
-				alert(error);
+				alert('GetChannel errror: ' + error);
 			});
 };
 
@@ -281,7 +281,7 @@ app.writeChannel = function(callback)
 			new Uint8Array([channel]),
 		    callback,
 		    function(error) {
-				alert(error);
+				alert('writeChannel error: ' + error);
 			});
 };
 
@@ -298,7 +298,7 @@ app.getAcknowledgementRequested = function(callback)
 				callback(acknowledgement);
 			},
 		    function(error) {
-				alert(error);
+				alert('getAcknowledmentRequested error: ' + error);
 			});
 };
 
@@ -316,7 +316,7 @@ app.writeAcknowledgementRequested = function(callback)
 			new Uint8Array([ack]),
 		    callback,
 		    function(error) {
-				alert(error);
+				alert('writeAcknowledmentRequested error: ' + error);
 			});
 };
 
@@ -338,7 +338,7 @@ app.getDataRate = function(callback)
 				callback(dataRate);
 			},
 		    function(error) {
-				alert(error);
+				alert('getDataRate error: ' + error);
 			});
 };
 
@@ -357,7 +357,7 @@ app.writeDataRate = function(callback)
 			new Uint16Array([dataRate]),
 		    callback,
 		    function(error) {
-				alert(error);
+				alert('writeDataRate error: ' + error);
 			});
 };
 
@@ -387,7 +387,7 @@ app.getBatteryLevel = function(callback)
 				callback(batteryLevel);
 			},
 		    function(error) {
-				alert(error);
+				alert('getBatteryLevel error: ' + error);
 			});
 
 };
@@ -430,7 +430,7 @@ app.getSendToMeosEnabled = function(callback)
 				callback(meosEnabled);
 			},
 		    function(error) {
-				alert(error);
+				alert('getSendToMeosEnabled error:' + error);
 			});
 };
 
@@ -448,7 +448,7 @@ app.writeSendToMeosEnabled = function(callback)
 			new Uint8Array([meosEnabled]),
 		    callback,
 		    function(error) {
-				alert(error);
+				alert('writeSendToMeosEnabled error: ' + error);
 			});
 };
 
@@ -471,7 +471,7 @@ app.getSendToMeosIP = function(callback)
 				callback(meosIP);
 			},
 		    function(error) {
-				alert(error);
+				alert('getSendToMeosIP error: ' + error);
 			});
 };
 
@@ -493,7 +493,7 @@ app.writeSendToMeosIP = function(callback)
 			meosIPArray,
 			callback,
 		    function(error) {
-				alert(error);
+				alert('writeSendToMeosIP error: ' + error);
 			});
 };
 
@@ -504,7 +504,7 @@ app.ui.displaySendToMeosIP = function(meosIP)
 	$("#sendtomeosip").val(meosIPString);
 };
 
-//-- Send to Meos ip
+//-- Send to Meos ip port
 app.getSendToMeosIPPort = function(callback)
 {
 	console.log('getSendToMeosIPPort');
@@ -515,7 +515,7 @@ app.getSendToMeosIPPort = function(callback)
 				callback(meosIPPort);
 			},
 		    function(error) {
-				alert(error);
+				alert('getSendToMeosIPPort error: ' + error);
 			});
 };
 
@@ -534,7 +534,7 @@ app.writeSendToMeosIPPort = function(callback)
 			new Uint16Array([meosIPPort]),
 		    callback,
 		    function(error) {
-				alert(error);
+				alert('writeSendToMeosIPPort error: ' + error);
 			});
 };
 
@@ -630,7 +630,7 @@ app.connect = function(device)
 	    }
 	    else
 	    {
-	        console.log('Connect error: ' + error)
+	        console.log('Connect error: ' + errorCode)
 	    }
 	}, 
 	{ serviceUUIDs: [app.radioService] }	
