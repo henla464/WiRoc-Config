@@ -199,14 +199,18 @@ app.ui.displayDeviceList = function()
 		{
 			// Map the RSSI value to a width in percent for the indicator.
 			var rssiWidth = 100; // Used when RSSI is zero or greater.
-			if (device.rssi < -100) { rssiWidth = 0; }
-			else if (device.rssi < 0) { rssiWidth = 100 + device.rssi; }
+			if (device.rssi < -120) { rssiWidth = 0; }
+			else if (device.rssi < 0) 
+			{ 
+				rssiWidth = 120 + device.rssi; 
+				if (rssiWidth > 100) { rssiWidth = 100; }
+			}
 
 			// Create tag for device data.
 			var element = $(
 				'<li style="padding:10px" class="device">'
-				+	'<strong>' + device.name + '</strong>'
-				+   '<a href="#" style="float:right" class="button connect-button">CONNECT &gt;</a>'
+				+	'<span class="device-header">' + device.name + '</span>'
+				+   '<a href="#" style="float:right" class="ui-btn connect-button">CONNECT</a>'
 				+   '<table style="border:0px;padding:0px;width:100%;">'
 				+     '<tr>'
 				+       '<td style="white-space:nowrap;">Bluetooth addr:</td>'
@@ -215,14 +219,14 @@ app.ui.displayDeviceList = function()
 				+     '<tr>'
 				+       '<td style="white-space:nowrap;">Signal ' + device.rssi + ' dBm</td>'
 				+       '<td style="background:rgb(150,150,150);margin:0px;padding:4px">'
-				+          '<div style="background:rgb(225,0,0);height:20px;width:'	+ 	rssiWidth + '%;"></div>'
+				+          '<div style="background:rgb(225,0,0);height:20px;width:'+rssiWidth+'%;"></div>'
 				+       '</td>'
 				+     '</tr>'
 				+   '</table>'
 				+ '</li>'
 			);
 			
-			element.find('a.button').bind("click",
+			element.find('a.connect-button').bind("click",
 				{address: device.address, name: device.name},
 				app.ui.onConnectButton);
 
@@ -413,9 +417,6 @@ app.ui.displayBatteryLevel = function(batteryLevel)
 	  levelBar.addClass('low');
 	};
 	levelBar.css('width', rawBatteryLevel + '%');
-
-	var label = $('#batterylabel');
-	label.text(rawBatteryLevel+"%");
 };
 
 
@@ -586,7 +587,7 @@ app.ui.onApplyAdvancedButton = function() {
 	app.writeSendToMeosEnabled(function() {
 		app.writeSendToMeosIP(function() {
 			app.writeSendToMeosIPPort(function() {
-				alert('success');
+				//alert('success');
 				app.getSendToMeosEnabled(app.ui.displaySendToMeosEnabled);
 				app.getSendToMeosIP(app.ui.displaySendToMeosIP);
 				app.getSendToMeosIPPort(app.ui.displaySendToMeosIPPort);
