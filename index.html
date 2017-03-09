@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, user-scalable=no,
@@ -8,15 +7,17 @@
 
 	<title>WiRoc Config</title>
 
- 	
 	<style>
 		@import 'ui/css/jquery.mobile-1.4.5.css';
 	</style> 
-    <style>
+    	<style>
 		@import 'ui/css/evothings-app.css';
 	</style>
 	
     <style>
+	.ui-navbar li .ui-btn {
+		font-size: 2.5vw;
+	}
 	.ui-mobile label,
 	div.ui-controlgroup-label {
 		font-weight: normal;
@@ -231,7 +232,7 @@
 		#menu-right li ul { /* Menu Item List */
 		    position: absolute; /* Position absolutely */
 		    display: none; /* Hide */
-		    z-index:500; /* Ensure visibility over other elements on page */
+		    z-index:5000; /* Ensure visibility over other elements on page */
 		    margin-top: 0px; /* Bring menu closer to button; not needed on mobile */
 		}
 		#menu-right li ul li {
@@ -260,6 +261,7 @@
 			margin: 2vw 2vw;
 		}
 
+
 		/* advanced config*/
 		div.advanced-config div.ui-input-text  {
 			margin-top:0.5em;
@@ -275,6 +277,7 @@
 
 	<script src="cordova.js"></script>
 	<script src="libs/jquery/jquery.js"></script>
+	<script src="libs/peekabar/peekabar.js"></script>
 	<script src="libs/jquery/jquery.mobile-1.4.5.js"></script>
 	<script src="libs/evothings/evothings.js"></script>
 	<script src="libs/evothings/ui/ui.js"></script>
@@ -284,8 +287,25 @@
 			//$('#page-device-scan').show();
 			//$('#page-basic-config').show();
 			//app.getBatteryLevel(app.ui.displayBatteryLevel);
+			app.searchDevicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('body'), autohide: true, backgroundColor: '#ffbf00' });
+			app.batteryErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#ffbf00' });
+			app.radioErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#ffbf00' });
+			app.radioSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#99ff99' });
+			app.meosErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-meos'), autohide: true, backgroundColor: '#ffbf00' });
+			app.meosSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-meos'), autohide: true, backgroundColor: '#99ff99' });
+			app.networkErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#ffbf00' });
+			app.networkSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#99ff99' });
+			app.networkInfoBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#80d4ff' });
+			app.miscStatusErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-status'), autohide: true, backgroundColor: '#ffbf00' });
+			app.miscSettingsErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-settings'), autohide: true, backgroundColor: '#99ff99' });
+			app.miscSettingsSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-settings'), autohide: true, backgroundColor: '#ffbf00' });
+			app.miscServicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-services'), autohide: true, backgroundColor: '#99ff99' });
+			
+			$('#wifiConnect').click(app.ui.onWifiPasswordConnectButton);
+			$('#saveSettingButton').click(app.ui.onEditSettingSaveButton);
 
-			$("input[name='radio-choice-channel-type']").bind( "change", function(event, ui) {
+
+			$("input[name='radio-choice-channel-type']").on( "change", function(event, ui) {
 				//alert(this.value);
 							
 				if (this.value == 'custom') {
@@ -308,11 +328,21 @@
 						app.disconnect();
 					} else if (toPageName == "page-advanced-config") 
 					{
-						app.readAdvancedSettings();
+						//app.loadAdvanced();
 					}
 				}
-
 			} );
+
+			// update the background 
+			$("#channel-select").on( "change", function(event, ui) {
+				app.ui.updateBackgroundColor();
+			});
+			$("#acknowledgement").on( "change", function(event, ui) {
+				app.ui.updateBackgroundColor();
+			});
+			$('input[type=radio][name=radio-choice-data-rate]').on("change", function(event, ui) {
+				app.ui.updateBackgroundColor();
+			});
 
 			// Menu
 			$('body').bind('hideOpenMenus', function(){
@@ -335,40 +365,23 @@
 			// about link
 			$( "#popup-about-link" ).on("click", function (event, ui) { $( "#popup-about" ).popup( "open" ); return false; });
 
-		// Create tag for device data.
-			/*var element = $(
-				'<li style="padding:10px" class="device">'
-				+	'<strong>wiroc device</strong>'
-				+   '<a href="#" style="float:right" class="ui-btn ui-btn-inline ui-corner-all connect-button">CONNECT -&gt;</a>'
-				+   '<table style="border:0px;padding:0px;width:100%;">'
-				+     '<tr>'
-				+       '<td style="white-space:nowrap;">Bluetooth addr:</td>'
-				+       '<td>10.10.10.10</td>'
-				+     '</tr>'
-				+     '<tr>'
-				+       '<td style="white-space:nowrap;">Signal 90 dBm</td>'
-				+       '<td style="background:rgb(150,150,150);margin:0px;padding:4px">'
-				+          '<div style="background:rgb(225,0,0);height:20px;width:90%;"></div>'
-				+       '</td>'
-				+     '</tr>'
-				+   '</table>'
-				+ '</li>'
-			);
-			*/
-			//element.find('a.button').bind("click",
-			//	{address: '10.10.10.10', name: 'wiroc'},
-			//	app.ui.onConnectButton);
+			$( "#tabs-main" ).on( "tabsactivate", function( event, ui ) { 
+				if (ui.newTab.data("tabname") == "radio") {
+					app.readBasicSettings();
+				} else if (ui.newTab.data("tabname") == "meos") {
+					app.readMeosSettings();
+				};
+			} );
 
-			//$('#found-devices').append(element);
 		});
 	</script>
 </head>
-
 <body ontouchstart=""><!-- ontouchstart="" enables low-delay CSS transitions. -->
- 	<div id="page-device-scan" data-role="page">
+	<div id="page-device-scan" data-role="page">
 		<div data-role="header">
 			<h1 style="font-size:3vw">WiRoc<br/>Config</h1>
 		</div>
+		<div id="notification-search-devices" style="height:1px"></div>
 
  		<div role="main" class="ui-content" class="page">
 			<a href="#page-basic-config" data-transition="slide">Slide</a>
@@ -382,7 +395,7 @@
 	</div>
 
 
-	<!-- Basic config -->
+	
 	<div id="page-basic-config" data-role="page">
 		<div data-role="header">
 			<a href="#page-device-scan" id="menu-left" class="ui-btn ui-corner-all ui-btn-inline ui-mini ui-btn-icon-left ui-icon-carat-l" data-rel="back" data-transition="slide">Back</a>			
@@ -420,63 +433,126 @@
 				</table>
 			</span>
 		</div>
-
-		
-
- 		<div data-role="main" class="ui-content" class="page">
+		<div data-role="main" class="ui-content" class="page" style="padding:0">
 		<form>
-    			<h1 id="device-name"></h1>
-		
-			<div>
-				<fieldset data-role="controlgroup" data-type="horizontal">
-					<input type="radio" name="radio-choice-channel-type" id="radio-choice-channel-type-default" value="default" checked="checked"><label for="radio-choice-channel-type-default">Predefined channel</label>
-					<input type="radio" name="radio-choice-channel-type" id="radio-choice-channel-type-custom" value="custom"><label for="radio-choice-channel-type-custom">Custom channel</label>
-				</fieldset>
-			</div>
-			<label id="channel-header" class="default-channel">Channel</label>
-			<div class="ui-field-contain channel">
-				<select name="channel" id="channel-select" data-native-menu="false">
-					<option value="1">1</option>
-					<option value="2">2</option>
-					<option value="3">3</option>
-					<option value="4">4</option>
-					<option value="5">5</option>
-					<option value="6">6</option>
-					<option value="7">7</option>
-					<option value="8">8</option>
-					<option value="9">9</option>
-				</select>
-			</div>
-		     
-			<div id="acknowledge-div">
- 				<label><input type="checkbox" id="acknowledgement">Request acknowledgement</label>
-			</div>
-			<div>
-				<fieldset data-role="controlgroup" data-type="horizontal" class="datarate datarate-disabled">
-					<legend>Data rate</legend>
-					<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-1" value="146" disabled="disabled"><label for="radio-choice-data-rate-1">146 bps</label>
-					<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-2" value="293" disabled="disabled"><label for="radio-choice-data-rate-2">293 bps</label>
-					<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-3" value="586" disabled="disabled" checked="checked"><label for="radio-choice-data-rate-3">586 bps</label>
-					<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-4" value="2148" disabled="disabled"><label for="radio-choice-data-rate-4">2148 bps</label>
-					<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-5" value="7032" disabled="disabled"><label for="radio-choice-data-rate-5">7032 bps</label>
-				</fieldset>
-			</div>
-			<div style="text-align:center">
-				<div style="display:inline-block">
-					<a href="#" onclick="app.ui.onReadBasicButton()" class="ui-btn ui-btn-inline ui-corner-all read-basic-button">READ</a>
-					<a href="#" onclick="app.ui.onApplyBasicButton()" class="ui-btn ui-btn-inline ui-corner-all apply-basic-button">APPLY SETTINGS</a>
+			<h1 id="device-name" style="font-size:5vw;text-align: center;margin:0">WiRoc</h1>
+			<div data-role="tabs" id="tabs-main">
+			 	<div data-role="navbar">
+					<ul>
+					<li data-tabname="radio"><a href="#radio" data-ajax="false" id="tab-radio" class="ui-btn-active ui-state-persist">Radio</a></li>
+					<li data-tabname="meos"><a href="#meos" data-ajax="false" id="tab-meos">MeOS</a></li>
+					<li data-tabname="network"><a href="#network" data-ajax="false" id="tab-network">Network</a></li>
+					</ul>
 				</div>
+				<div id="radio" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-radio" style="height:1px"></div>
+					<div>
+						<fieldset data-role="controlgroup" data-type="horizontal">
+							<input type="radio" name="radio-choice-channel-type" id="radio-choice-channel-type-default" value="default" checked="checked"><label for="radio-choice-channel-type-default">Predefined channel</label>
+							<input type="radio" name="radio-choice-channel-type" id="radio-choice-channel-type-custom" value="custom"><label for="radio-choice-channel-type-custom">Custom channel</label>
+						</fieldset>
+					</div>
+					<label id="channel-header" class="default-channel">Channel</label>
+					<div class="ui-field-contain channel">
+						<select name="channel" id="channel-select" data-native-menu="false">
+							<option value="1">1</option>
+							<option value="2">2</option>
+							<option value="3">3</option>
+							<option value="4">4</option>
+							<option value="5">5</option>
+							<option value="6">6</option>
+							<option value="7">7</option>
+							<option value="8">8</option>
+							<option value="9">9</option>
+						</select>
+					</div>
+				     
+					<div id="acknowledge-div">
+		 				<label><input type="checkbox" id="acknowledgement">Request acknowledgement</label>
+					</div>
+					<div>
+						<fieldset data-role="controlgroup" data-type="horizontal" class="datarate datarate-disabled">
+							<legend>Data rate</legend>
+							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-1" value="146" disabled="disabled"><label for="radio-choice-data-rate-1">146 bps</label>
+							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-2" value="293" disabled="disabled"><label for="radio-choice-data-rate-2">293 bps</label>
+							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-3" value="586" disabled="disabled" checked="checked"><label for="radio-choice-data-rate-3">586 bps</label>
+							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-4" value="2148" disabled="disabled"><label for="radio-choice-data-rate-4">2148 bps</label>
+							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-5" value="7032" disabled="disabled"><label for="radio-choice-data-rate-5">7032 bps</label>
+						</fieldset>
+					</div>
+					<div style="text-align:center">
+						<div style="display:inline-block">
+							<a href="#" onclick="app.ui.onReadBasicButton()" class="ui-btn ui-btn-inline ui-corner-all read-basic-button">READ</a>
+							<a href="#" onclick="app.ui.onApplyBasicButton()" class="ui-btn ui-btn-inline ui-corner-all apply-basic-button">APPLY SETTINGS</a>
+						</div>
+					</div>
+				</div>			
+				<div id="meos" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-meos" style="height:1px"></div>
+					<div class="ui-field-contain advanced-config">
+						<label for="sendtomeosenabled">Send punches to MeOS</label>
+						<input type="checkbox" name="sendtomeosenabled" id="sendtomeosenabled">
+					</div>
+					<div class="ui-field-contain advanced-config">
+						<label for="sendtomeosip">IP&nbsp;address:</label>
+						<input type="text" name="sendtomeosip" id="sendtomeosip">
+					</div>
+					<div class="ui-field-contain advanced-config">
+						<label for="sendtomeosipport">Port:</label>
+						<input type="number" min="1" max="65535" name="sendtomeosipport" id="sendtomeosipport">
+					</div>
+
+					<div style="text-align:center">
+						<div style="display:inline-block">
+							<a href="#" onclick="app.ui.onReadMeosButton()" class="ui-btn ui-btn-inline ui-corner-all read-basic-button">READ</a>
+							<a href="#" onclick="app.ui.onApplyMeosButton()" class="ui-btn ui-btn-inline ui-corner-all apply-basic-button">APPLY SETTINGS</a>
+						</div>
+					</div>
+				</div>
+				<div id="network" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-network" style="height:1px"></div>
+					<div style="text-align:left">
+						<div style="display:inline-block">
+							<a href="#" onclick="app.ui.onReadNetworkButton()" class="ui-btn ui-btn-inline ui-corner-all">Get/Refresh wifi list</a>
+						</div>
+					</div>
+
+					<div id="wifi-networks" class="dynamic">Empty list</div>
+					<hr/>
+					<div style="text-align:left">
+						<div style="display:inline-block">
+							Renew IP: <span id="ipaddress" /><br/>
+							<a href="#" onclick="app.ui.onRenewIPWifi()" class="ui-btn ui-btn-inline ui-corner-all" style="min-width:25vw">Wifi</a>
+							<a href="#" onclick="app.ui.onRenewIPEthernet()" class="ui-btn ui-btn-inline ui-corner-all" style="min-width:25vw">Ethernet</a>
+						</div>
+					</div>
+
+					<div data-role="popup" id="popupWifiLogin" data-theme="a" class="ui-corner-all">
+						<form>
+						<div style="padding:10px 20px;">
+							<h3>Enter password</h3>
+							<label for="wifiPassword" class="ui-hidden-accessible">Password:</label>
+							<input type="password" name="wifiPassword" id="wifiPassword" value="" placeholder="password" data-theme="a">
+							<button id="wifiConnect" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">Connect</button>
+						</div>
+						</form>
+					</div>
+				</div>
+
 			</div>
-		
 		</form>
 		</div>
 	</div>
 
 
-	<!-- Advanced config -->
+
+
+
+
+
 	<div id="page-advanced-config" data-role="page">
 		<div data-role="header">
-			<a href="#page-basic-config" id="menu-left" class="ui-btn ui-corner-all ui-btn-inline ui-mini ui-btn-icon-left ui-icon-carat-l" data-rel="back" data-transition="slide">Back</a>			
+			<a href="#page-device-scan" id="menu-left" class="ui-btn ui-corner-all ui-btn-inline ui-mini ui-btn-icon-left ui-icon-carat-l" data-rel="back" data-transition="slide">Back</a>			
 			<h1 style="font-size:3vw">WiRoc<br/>Config</h1>
 			<div id="battery-indicator">
 				<div id="battery" class="battery">
@@ -488,38 +564,95 @@
 				<a href="#" onclick="return false;" data-role="button" data-icon="gear" data-inline="true" data-iconpos="right">Options</a>
 				<ul data-role="listview" data-inset="true">
 					<li><a href="#" id="popup-about-link">About</a></li>
+
 				</ul>
 			</li>
 			</ul>      
 		</div>
 
-
- 		<div data-role="main" class="ui-content" class="page">
-		<form>
-    			<h1 id="device-name"></h1>
-		
-			<form method="post" action="demoform.asp">
-				<div class="ui-field-contain advanced-config">
-					<label for="sendtomeosenabled">Send punches to MeOS</label>
-					<input type="checkbox" name="sendtomeosenabled" id="sendtomeosenabled">
-				</div>
-				<div class="ui-field-contain advanced-config">
-					<label for="sendtomeosip">IP&nbsp;address:</label>
-					<input type="text" name="sendtomeosip" id="sendtomeosip">
-				</div>
-				<div class="ui-field-contain advanced-config">
-					<label for="sendtomeosipport">Port:</label>
-					<input type="number" min="1" max="65535" name="sendtomeosipport" id="sendtomeosipport">
-				</div>
-			</form>
-
-			<div style="text-align:center">
-				<div style="display:inline-block">
-					<a href="#" onclick="app.ui.onReadAdvancedButton()" class="ui-btn ui-btn-inline ui-corner-all read-basic-button">READ</a>
-					<a href="#" onclick="app.ui.onApplyAdvancedButton()" class="ui-btn ui-btn-inline ui-corner-all apply-basic-button">APPLY SETTINGS</a>
-				</div>
+		<div data-role="popup" id="popup-about" data-dismissible="true">
+			<a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
+			<div data-role="header" data-theme="a">
+				<h1>About</h1>
 			</div>
-		
+			<span>
+				<h1>WiRoc Config</h1>
+
+				<table>
+					<tr><td>Version</td><td>1.0</td></tr>
+					<tr><td></td><td></td></tr>
+					<tr><td></td><td></td></tr>
+					<tr><td></td><td></td></tr>
+				</table>
+			</span>
+		</div>
+		<div data-role="main" class="ui-content" class="page" style="padding:0">
+		<form>
+			<h1 id="device-name" style="font-size:5vw;text-align: center;margin:0">WiRoc</h1>
+			<div data-role="tabs" id="tabs-adv">
+			 	<div data-role="navbar">
+					<ul>
+					<li><a href="#status" data-ajax="false" id="tab-status" class="ui-btn-active ui-state-persist">Status</a></li>
+					<li><a href="#services" data-ajax="false" id="tab-services">Services</a></li>
+					<li><a href="#settings" data-ajax="false" id="tab-settings">Settings</a></li>
+					<li><a href="#punches" data-ajax="false" id="tab-punches">Punches</a></li>
+					</ul>
+				</div>
+				<div id="status" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-status" style="height:1px"></div>
+					<div style="text-align:left">
+						<div style="display:inline-block">
+							<a href="#" onclick="app.ui.onRefreshStatusButton()" class="ui-btn ui-btn-inline ui-corner-all">Get/Refresh</a>
+						</div>
+					</div>
+					<div id="wiroc-status-content"></div>
+				</div>
+				<div id="services" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-services" style="height:1px"></div>
+					<div style="text-align:left">
+						<div style="display:inline-block">
+							<a href="#" onclick="app.ui.onRefreshServicesButton()" class="ui-btn ui-btn-inline ui-corner-all">Get/Refresh</a>
+						</div>
+					</div>
+					<div id="wiroc-services-content"></div>
+				</div>
+				<div id="settings" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-settings" style="height:1px"></div>
+					<div style="text-align:left">
+						<div style="display:inline-block">
+							<a href="#" onclick="app.ui.onRefreshSettingsButton()" class="ui-btn ui-btn-inline ui-corner-all">Get/Refresh</a>
+						</div>
+					</div>
+					<div id="wiroc-settings-content"></div>
+					<div data-role="popup" id="popupAddEditSetting" data-theme="a" class="ui-corner-all">
+						<form>
+						<div style="padding:10px 20px;">
+							<h3>Setting</h3>
+							<label for="settingKey" class="ui-hidden-accessible">Key:</label>
+							<input type="text" name="settingKey" id="settingKey" value="" placeholder="Key" data-theme="a">
+							<label for="settingValue" class="ui-hidden-accessible">Value:</label>
+							<input type="text" name="settingValue" id="settingValue" value="" placeholder="Value" data-theme="a">
+							<button id="saveSettingButton" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">Save setting</button>
+						</div>
+						</form>
+					</div>
+				</div>
+				<div id="punches" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-punches" style="height:1px"></div>
+					<div style="text-align:left">
+						<div style="display:inline-block">
+							<a href="#" onclick="app.ui.onSubscribePunchesButton()" data-subscribe="true" id="btnSubscribePunches" class="ui-btn ui-btn-inline ui-corner-all">Subscribe</a>
+						</div>
+					</div>
+					<div id="wiroc-punches-content">
+						<table id="wiroc-punches-table" width="100%" border=1>
+							<thead><tr><th align=\"left\">Station</th><th align=\"left\">SI Card</th><th>Time</td></tr></thead>
+							<tbody></tbody>
+						</table>
+					</div>
+				</div>
+
+			</div>
 		</form>
 		</div>
 	</div>

@@ -1,6 +1,6 @@
 {
-  "name": "WiRoc-Config",
-  "version": "1.0",
+  "name": "wiroc-config",
+  "version": "1.0.0",
   "title": "WiRoc Config",
   "description": "App used to configure WiRoc devices",
   "tags": [
@@ -16,5 +16,16 @@
     }
   ],
   "index-file": "index.html",
-  "uuid": "71813a26-ff93-4873-93af-5262f34ccfb5"
+  "uuid": "71813a26-ff93-4873-93af-5262f34ccfb5",
+  "plugins": [
+    {
+      "name": "cordova-plugin-ble",
+      "version": "2.0.1"
+    }
+  ],
+  "long-description": "App used to configure WiRoc devices",
+  "author-name": "Henrik Larsson",
+  "author-email": "laselase@gmail.com",
+  "author-url": "https://asdf.asdf",
+  "cordova-id": "com.evothings.samples.WiRoc.Config"
 }
