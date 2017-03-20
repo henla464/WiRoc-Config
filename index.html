@@ -343,6 +343,15 @@
 			$('input[type=radio][name=radio-choice-data-rate]').on("change", function(event, ui) {
 				app.ui.updateBackgroundColor();
 			});
+			$("#sendtomeosenabled").on( "change", function(event, ui) {
+				app.ui.updateBackgroundColor();
+			});
+			$("#sendtomeosip").on( "input propertychange paste", function(event, ui) {
+				app.ui.updateBackgroundColor();
+			});
+			$('#sendtomeosipport').on("input propertychange paste", function(event, ui) {
+				app.ui.updateBackgroundColor();
+			});
 
 			// Menu
 			$('body').bind('hideOpenMenus', function(){

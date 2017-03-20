@@ -52,6 +52,10 @@ app.ui.radio = {};
 app.ui.radio.channel = null;
 app.ui.radio.dataRate = null;
 app.ui.radio.acknowledgementRequested = null;
+app.ui.meos = {};
+app.ui.meos.sendToMeosEnabled = null;
+app.ui.meos.sendToMeosIP = null;
+app.ui.meos.sendToMeosIPPort = null;
 
 // Timer that updates the device list and removes inactive
 // devices in case no devices are found by scan.
@@ -174,11 +178,19 @@ app.ui.scanError = function(errorCode)
 
 app.ui.updateBackgroundColor = function()
 {
+	// radio
 	if (app.ui.radio.channel != app.ui.getChannel() || app.ui.radio.dataRate != app.ui.getDataRate() || app.ui.radio.acknowledgementRequested != app.ui.getAcknowledgementRequested())
 	{
 		$('#radio').css('background-color','#FFEFD5');
 	} else {
 		$('#radio').css('background-color','white');
+	}
+	// meos
+	if (app.ui.meos.sendToMeosEnabled != app.ui.getSendToMeosEnabled() || app.ui.meos.sendToMeosIP != app.ui.getSendToMeosIP() || app.ui.meos.sendToMeosIPPort != app.ui.getSendToMeosIPPort())
+	{
+		$('#meos').css('background-color','#FFEFD5');
+	} else {
+		$('#meos').css('background-color','white');
 	}
 };
 
@@ -283,7 +295,7 @@ app.ui.getChannel = function() {
 
 app.writeChannel = function(callback)
 {
-	console.log('writechannel');
+
 	var channel = parseInt(app.ui.getChannel());
 	var service = evothings.ble.getService(app.connectedDevice, app.radioService2)
 	var characteristic = evothings.ble.getCharacteristic(service, app.radioChannelCharacteristic)
@@ -293,6 +305,7 @@ app.writeChannel = function(callback)
 		new Uint8Array([channel]),
 		callback,
 		function(error) {
+			console.log('writechannel error: ' + error);
 			app.radioErrorBar.show({
 				html: 'Error saving radio setting (Channel): ' + error
 			});
@@ -439,7 +452,7 @@ app.getBatteryLevel = function(callback)
 		function(error) {
 			console.log('getBatteryLevel error: ' + error);
 			app.batteryErrorBar.show({
-				html: 'Error getting battery',
+				html: 'Error getting battery'
 			});
 		}
 	);
@@ -489,7 +502,7 @@ app.getSendToMeosEnabled = function(callback)
 		},
 		function(error) {
 			app.meosErrorBar.show({
-				html: 'Error getting Meos settings (Enabled): ' + error,
+				html: 'Error getting Meos settings (Enabled): ' + error
 			});
 		}
 	);
@@ -513,7 +526,7 @@ app.writeSendToMeosEnabled = function(callback)
 		callback,
 		function(error) {
 			app.meosErrorBar.show({
-				html: 'Error saving Meos settings (Enabled): ' + error,
+				html: 'Error saving Meos settings (Enabled): ' + error
 			});
 		}
 	);
@@ -522,11 +535,26 @@ app.writeSendToMeosEnabled = function(callback)
 app.ui.displaySendToMeosEnabled = function(meosEnabled)
 {
 	var raw = new DataView(meosEnabled).getUint8(0, true);
+	app.ui.meos.sendToMeosEnabled = raw;
 	console.log('send to meos enabled: ' + raw);
 	$('#sendtomeosenabled').prop("checked",raw != 0).checkboxradio("refresh");
+	app.ui.updateBackgroundColor();
 };
 
 
+app.isNumber = function(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+};
+
+app.validateIPaddress = function(ipaddress)   
+{  
+	var ipformat = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;  
+	if(ipaddress.match(ipformat))  
+	{  
+		return true;  
+	}
+	return false;
+}
 
 //-- Send to Meos ip
 app.getSendToMeosIP = function(callback)
@@ -542,7 +570,7 @@ app.getSendToMeosIP = function(callback)
 		},
 		function(error) {
 			app.meosErrorBar.show({
-				html: 'Error getting Meos settings (IP): ' + error,
+				html: 'Error getting Meos settings (IP): ' + error
 			});
 		}
 	);
@@ -557,28 +585,36 @@ app.writeSendToMeosIP = function(callback)
 {
 	console.log('write meos ip');
 	var meosIP = app.ui.getSendToMeosIP();
-	var te = new TextEncoder("utf-8").encode(meosIP);
-	var meosIPArray = new Uint8Array(te);
-	var service = evothings.ble.getService(app.connectedDevice, app.meosService)
-	var characteristic = evothings.ble.getCharacteristic(service, app.sendToMeosIPCharacteristic)
-	evothings.ble.writeCharacteristic(
-		app.connectedDevice,
-		characteristic,
-		meosIPArray,
-		callback,
-		function(error) {
-			app.meosErrorBar.show({
-				html: 'Error saving Meos settings (IP): ' + error,
-			});
-		}
-	);
+	if (!app.validateIPaddress(meosIP)) {
+		app.meosErrorBar.show({
+			html: 'Meos IP Address incorrect format'
+		});
+	} else {
+		var te = new TextEncoder("utf-8").encode(meosIP);
+		var meosIPArray = new Uint8Array(te);
+		var service = evothings.ble.getService(app.connectedDevice, app.meosService)
+		var characteristic = evothings.ble.getCharacteristic(service, app.sendToMeosIPCharacteristic)
+		evothings.ble.writeCharacteristic(
+			app.connectedDevice,
+			characteristic,
+			meosIPArray,
+			callback,
+			function(error) {
+				app.meosErrorBar.show({
+					html: 'Error saving Meos settings (IP): ' + error
+				});
+			}
+		);
+	}
 };
 
 app.ui.displaySendToMeosIP = function(meosIP)
 {
 	var meosIPString = new TextDecoder("utf-8").decode(meosIP);
+	app.ui.meos.sendToMeosIP = meosIPString;
 	console.log('meos ip: ' + meosIPString);
 	$("#sendtomeosip").val(meosIPString);
+	app.ui.updateBackgroundColor();
 };
 
 //-- Send to Meos ip port
@@ -595,41 +631,57 @@ app.getSendToMeosIPPort = function(callback)
 		},
 		function(error) {
 			app.meosErrorBar.show({
-				html: 'Error getting Meos settings (Port): ' + error,
+				html: 'Error getting Meos settings (Port): ' + error
 			});
 		}
 	);
 };
+
+
 
 app.ui.getSendToMeosIPPort = function() {
 	var meosIPPort = $("#sendtomeosipport").val();
-	return meosIPPort;
+	meosIPPortInteger = parseInt(meosIPPort);
+	console.log("meosIPPortInteger: " + meosIPPortInteger);
+	if (app.isNumber(meosIPPortInteger)) {
+		return meosIPPortInteger;
+	}
+	return 0;
 };
 
-app.writeSendToMeosIPPort = function(callback)
+app.writeSendToMeosIPPort = function(callback, errorCallback)
 {
 	console.log('write meos ip port');
-	var meosIPPort = parseInt(app.ui.getSendToMeosIPPort());
-	var service = evothings.ble.getService(app.connectedDevice, app.meosService)
-	var characteristic = evothings.ble.getCharacteristic(service, app.sendToMeosIPPortCharacteristic)
-	evothings.ble.writeCharacteristic(
-		app.connectedDevice,
-		characteristic,
-		new Uint16Array([meosIPPort]),
-		callback,
-		function(error) {
-			app.meosErrorBar.show({
-				html: 'Error saving Meos settings (Port): ' + error,
-			});
-		}
-	);
+	var meosIPPort = app.ui.getSendToMeosIPPort();
+ 	if (meosIPPort == 0) {
+		app.meosErrorBar.show({
+			html: 'Meos Port must be an integer'
+		});
+		errorCallback();
+	} else {
+		var service = evothings.ble.getService(app.connectedDevice, app.meosService)
+		var characteristic = evothings.ble.getCharacteristic(service, app.sendToMeosIPPortCharacteristic)
+		evothings.ble.writeCharacteristic(
+			app.connectedDevice,
+			characteristic,
+			new Uint16Array([meosIPPort]),
+			callback,
+			function(error) {
+				app.meosErrorBar.show({
+					html: 'Error saving Meos settings (Port): ' + error
+				});
+			}
+		);
+	}
 };
 
 app.ui.displaySendToMeosIPPort = function(meosIPPort)
 {
 	var rawMeosIPPort = new DataView(meosIPPort).getUint16(0, true);
+	app.ui.meos.sendToMeosIPPort = rawMeosIPPort;
 	console.log('meos ip port: ' + rawMeosIPPort);
 	$("#sendtomeosipport").val(rawMeosIPPort);
+	app.ui.updateBackgroundColor();
 };
 
 //-- Get Wifi networks
@@ -778,7 +830,7 @@ app.getIPAddress = function(callback)
 		},
 		function(error) {
 			console.log('getipaddress error');
-			app.meosErrorBar.show({
+			app.networkErrorBar.show({
 				html: 'Error getting ip address: ' + error,
 			});
 		}
@@ -890,13 +942,17 @@ app.ui.onReadMeosButton = function() {
 	app.readMeosSettings();
 };
 
-app.ui.onMeosAdvancedButton = function() {
+app.ui.onApplyMeosButton = function() {
 	app.writeSendToMeosEnabled(function() {
 		app.writeSendToMeosIP(function() {
 			app.writeSendToMeosIPPort(function() {
-				app.radioSuccessBar.show({
+				app.meosSuccessBar.show({
 			    		html: 'Meos settings saved'
 				});
+				app.getSendToMeosEnabled(app.ui.displaySendToMeosEnabled);
+				app.getSendToMeosIP(app.ui.displaySendToMeosIP);
+				app.getSendToMeosIPPort(app.ui.displaySendToMeosIPPort);
+			}, function() {
 				app.getSendToMeosEnabled(app.ui.displaySendToMeosEnabled);
 				app.getSendToMeosIP(app.ui.displaySendToMeosIP);
 				app.getSendToMeosIPPort(app.ui.displaySendToMeosIPPort);
@@ -912,28 +968,62 @@ app.ui.onGetNetworkWifiListButton = function() {
 };
 
 // Status
-app.getWiRocStatus = function(callback) {
-	console.log('getStatus');
-	var service = evothings.ble.getService(app.connectedDevice, app.miscService);
-	var characteristic = evothings.ble.getCharacteristic(service, app.miscStatusCharacteristic);
-	evothings.ble.readCharacteristic(
-        	app.connectedDevice,
-        	characteristic,
-        	function(data) {
-			callback(data);
-		},
+app.writeWiRocStatus = function(offset, callback)
+{
+	console.log('writeWiRocStatus: ' + offset);
+	var te = new TextEncoder("utf-8").encode(offset+'');
+	var offsetArr = new Uint8Array(te);
+	var service = evothings.ble.getService(app.connectedDevice, app.miscService)
+	var characteristic = evothings.ble.getCharacteristic(service, app.miscStatusCharacteristic)
+	evothings.ble.writeCharacteristic(
+		app.connectedDevice,
+		characteristic,
+		offsetArr,
+		callback,
 		function(error) {
-			console.log('getStatus error');
 			app.miscStatusErrorBar.show({
-				html: 'Error getting status: ' + error
+			    html: 'Error getting status 1: ' + error
 			});
 		}
 	);
 };
 
+app.wiRocStatus = '';
+
+app.getWiRocStatus = function(callback) {
+	console.log('getStatus');
+	var readWiRocStatus = function() {
+	  var service = evothings.ble.getService(app.connectedDevice, app.miscService);
+	  var characteristic = evothings.ble.getCharacteristic(service, app.miscStatusCharacteristic);
+	  evothings.ble.readCharacteristic(
+        	app.connectedDevice,
+        	characteristic,
+        	function(data) {
+			var rawStatus = new TextDecoder("utf-8").decode(data);
+			app.wiRocStatus += rawStatus;
+			if (rawStatus.length == 600) {
+				app.writeWiRocStatus(rawStatus.length, readWiRocStatus);
+			} else {
+				callback(app.wiRocStatus);
+			}
+		},
+		function(error) {
+			console.log('getStatus error');
+			app.miscStatusErrorBar.show({
+				html: 'Error getting status 2: ' + error
+			});
+		}
+	  );
+        };
+
+	app.wiRocStatus = '';
+	app.writeWiRocStatus(0, readWiRocStatus);
+};
+
 app.ui.displayWiRocStatus = function(status) {
-	var rawStatus = new TextDecoder("utf-8").decode(status);
-	var statusObj = JSON.parse(rawStatus);
+	console.log(status);
+	console.log(status.length);
+	var statusObj = JSON.parse(status);
 	var html = "<h2>Input:</h2><table width=\"100%\" border=1><thead>";
 	html += "<tr><th align=\"left\">Type</th><th align=\"left\">Instance</th></tr></thead><tbody>";
 	for (var i = 0; i < statusObj.inputAdapters.length; i++) {
@@ -1166,6 +1256,10 @@ app.connect = function(device)
 	clearInterval(app.ui.updateTimer);
 
 	console.log('connect('+device.address+')');
+	$('#wiroc-status-content').html('');
+	$('#wiroc-services-content').html('');
+	$('#wiroc-settings-content').html('');
+	$("#wiroc-punches-table tbody").html('');
         evothings.ble.connectToDevice(
 		device,
 		app.onConnected,
