@@ -284,30 +284,33 @@
 	<script src="app.js"></script>
 	<script>
 		$(document).ready(function() {
-			//$('#page-device-scan').show();
-			//$('#page-basic-config').show();
-			//app.getBatteryLevel(app.ui.displayBatteryLevel);
-			app.searchDevicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('body'), autohide: true, backgroundColor: '#ffbf00' });
+			app.networkInfoBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#80d4ff' });
+
+			app.radioSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#99ff99' });
+			app.meosSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-meos'), autohide: true, backgroundColor: '#99ff99' });
+			app.miscDeviceNameSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-devicename'), autohide: true, backgroundColor: '#99ff99' });
+			app.networkSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#99ff99' });
+			app.miscSettingsSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-settings'), autohide: true, backgroundColor: '#99ff99' });
+			app.miscDatabaseSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database'), autohide: true, backgroundColor: '#99ff99' });
+			app.miscDatabaseAdvSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database-adv'), autohide: true, backgroundColor: '#99ff99' });
+
+			app.searchDevicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-search-devices'), autohide: true, backgroundColor: '#ffbf00' });
 			app.batteryErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#ffbf00' });
 			app.radioErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#ffbf00' });
-			app.radioSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#99ff99' });
 			app.meosErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-meos'), autohide: true, backgroundColor: '#ffbf00' });
-			app.meosSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-meos'), autohide: true, backgroundColor: '#99ff99' });
 			app.networkErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#ffbf00' });
-			app.networkSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#99ff99' });
-			app.networkInfoBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#80d4ff' });
 			app.miscStatusErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-status'), autohide: true, backgroundColor: '#ffbf00' });
-			app.miscSettingsErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-settings'), autohide: true, backgroundColor: '#99ff99' });
-			app.miscSettingsSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-settings'), autohide: true, backgroundColor: '#ffbf00' });
-			app.miscServicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-services'), autohide: true, backgroundColor: '#99ff99' });
+			app.miscDeviceNameErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-devicename'), autohide: true, backgroundColor: '#ffbf00' });
+			app.miscSettingsErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-settings'), autohide: true, backgroundColor: '#ffbf00' });
+			app.miscServicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-services'), autohide: true, backgroundColor: '#ffbf00' });
+			app.miscDatabaseErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database'), autohide: true, backgroundColor: '#ffbf00' });
+			app.miscDatabaseAdvErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database-adv'), autohide: true, backgroundColor: '#ffbf00' });
 			
 			$('#wifiConnect').click(app.ui.onWifiPasswordConnectButton);
 			$('#saveSettingButton').click(app.ui.onEditSettingSaveButton);
 
 
 			$("input[name='radio-choice-channel-type']").on( "change", function(event, ui) {
-				//alert(this.value);
-							
 				if (this.value == 'custom') {
 					app.ui.onShowCustomChannelPage();
 				} else {
@@ -328,10 +331,23 @@
 						app.disconnect();
 					} else if (toPageName == "page-advanced-config") 
 					{
-						//app.loadAdvanced();
+						if (app.advancedConfigTab == null) {
+							setTimeout(function(){ $('#tab-devicename').trigger('click'); }, 500);
+						} else {
+							setTimeout(function(){ $('#tab-' + app.advancedConfigTab).trigger('click'); }, 500);
+						}
+					} else if (toPageName == "page-basic-config")
+					{
+						if (app.basicConfigTab == null) {
+							setTimeout(function(){ $('#tab-radio').trigger('click'); }, 500);
+						} else {
+							setTimeout(function(){ $('#tab-' + app.basicConfigTab).trigger('click'); }, 500);
+						}
 					}
+					
 				}
 			} );
+			
 
 			// update the background 
 			$("#channel-select").on( "change", function(event, ui) {
@@ -375,12 +391,17 @@
 			$( "#popup-about-link" ).on("click", function (event, ui) { $( "#popup-about" ).popup( "open" ); return false; });
 
 			$( "#tabs-main" ).on( "tabsactivate", function( event, ui ) { 
+				app.basicConfigTab = ui.newTab.data("tabname");
 				if (ui.newTab.data("tabname") == "radio") {
 					app.readBasicSettings();
 				} else if (ui.newTab.data("tabname") == "meos") {
 					app.readMeosSettings();
 				};
 			} );
+			$( "#tabs-adv" ).on( "tabsactivate", function( event, ui ) { 
+				app.advancedConfigTab = ui.newTab.data("tabname");
+			} );
+
 
 		});
 	</script>
@@ -451,6 +472,7 @@
 					<li data-tabname="radio"><a href="#radio" data-ajax="false" id="tab-radio" class="ui-btn-active ui-state-persist">Radio</a></li>
 					<li data-tabname="meos"><a href="#meos" data-ajax="false" id="tab-meos">MeOS</a></li>
 					<li data-tabname="network"><a href="#network" data-ajax="false" id="tab-network">Network</a></li>
+					<li data-tabname="database"><a href="#database" data-ajax="false" id="tab-database">Database</a></li>
 					</ul>
 				</div>
 				<div id="radio" class="ui-body-d ui-content" style="padding:2vw">
@@ -547,6 +569,14 @@
 						</form>
 					</div>
 				</div>
+				<div id="database" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-database" style="height:1px"></div>
+					<div style="text-align:left">
+						<div style="display:inline-block">
+							<a href="#" onclick="app.ui.onDeletePunchesButton()" class="ui-btn ui-btn-inline ui-corner-all">Delete all punches from database</a>
+						</div>
+					</div>
+				</div>
 
 			</div>
 		</form>
@@ -597,15 +627,30 @@
 		</div>
 		<div data-role="main" class="ui-content" class="page" style="padding:0">
 		<form>
-			<h1 id="device-name" style="font-size:5vw;text-align: center;margin:0">WiRoc</h1>
+			<h1 id="device-name" style="font-size:5vw;text-align: center;margin:0"></h1>
 			<div data-role="tabs" id="tabs-adv">
 			 	<div data-role="navbar">
 					<ul>
-					<li><a href="#status" data-ajax="false" id="tab-status" class="ui-btn-active ui-state-persist">Status</a></li>
-					<li><a href="#services" data-ajax="false" id="tab-services">Services</a></li>
-					<li><a href="#settings" data-ajax="false" id="tab-settings">Settings</a></li>
-					<li><a href="#punches" data-ajax="false" id="tab-punches">Punches</a></li>
+					<li data-tabname="devicename"><a href="#devicename" data-ajax="false" id="tab-devicename" class="ui-btn-active ui-state-persist">Device name</a></li>
+					<li data-tabname="status"><a href="#status" data-ajax="false" id="tab-status">Status</a></li>
+					<li data-tabname="services"><a href="#services" data-ajax="false" id="tab-services">Services</a></li>
+					<li data-tabname="settings"><a href="#settings" data-ajax="false" id="tab-settings">Settings</a></li>
+					<li data-tabname="punches"><a href="#punches" data-ajax="false" id="tab-punches">Punches</a></li>
+					<li data-tabname="database-adv"><a href="#database-adv" data-ajax="false" id="tab-database-adv">Database</a></li>
 					</ul>
+				</div>
+				<div id="devicename" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-devicename" style="height:1px"></div>
+					<div class="ui-field-contain advanced-config">
+						<label for="sendtomeosip">Device Name:</label>
+						<input type="text" name="wirocdevicename" id="wirocdevicename">
+					</div>
+					<div style="text-align:left">
+						<div style="display:inline-block">
+							<a href="#" onclick="app.ui.onReadDeviceNameButton()" class="ui-btn ui-btn-inline ui-corner-all">READ</a>
+							<a href="#" onclick="app.ui.onApplyDeviceNameButton()" class="ui-btn ui-btn-inline ui-corner-all">APPLY SETTINGS</a>
+						</div>
+					</div>
 				</div>
 				<div id="status" class="ui-body-d ui-content" style="padding:2vw">
 					<div id="notification-status" style="height:1px"></div>
@@ -658,6 +703,14 @@
 							<thead><tr><th align=\"left\">Station</th><th align=\"left\">SI Card</th><th>Time</td></tr></thead>
 							<tbody></tbody>
 						</table>
+					</div>
+				</div>
+				<div id="database-adv" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-database-adv" style="height:1px"></div>
+					<div style="text-align:left">
+						<div style="display:inline-block">
+							<a href="#" onclick="app.ui.onDropTablesButton()" data-subscribe="true" id="btnDropTables" class="ui-btn ui-btn-inline ui-corner-all">Drop all database tables</a>
+						</div>
 					</div>
 				</div>
 

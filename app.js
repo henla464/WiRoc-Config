@@ -6,6 +6,10 @@
 // Application object.
 var app = {};
 
+// Active tabs
+app.basicConfigTab = null;
+app.advancedConfigTab = null;
+
 // Device list.
 app.devices = {};
 app.connectedDevice = null;
@@ -17,10 +21,16 @@ app.meosErrorBar = null;
 app.meosSuccessBar = null;
 app.networkErrorBar = null;
 app.networkSuccessBar = null;
+app.miscDeviceNameErrorBar = null;
+app.miscDeviceNameSuccessBar = null;
 app.miscStatusErrorBar = null;
 app.miscSettingsErrorBar = null;
 app.miscSettingsSuccessBar = null;
 app.miscServicesErrorBar = null;
+app.miscDatabaseErrorBar = null;
+app.miscDatabaseSuccessBar = null;
+app.miscDatabaseAdvErrorBar = null;
+app.miscDatabaseAdvSuccessBar = null;
 
 app.radioService = 'f6026b69-9254-fd82-0242-60d9aaff57dc';
 app.radioService2 =                      'dc57ffaa-d960-4202-82fd-5492696b02f6';
@@ -45,6 +55,8 @@ app.miscDebugCharacteristic = 			'fb880902-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscStatusCharacteristic =			'fb880903-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscSettingsCharacteristic = 		'fb880904-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscServicesCharacteristic = 		'fb880905-4ab2-40a2-a8f0-14cc1c2e5608';
+app.miscDatabaseCharacteristic = 		'fb880906-4ab2-40a2-a8f0-14cc1c2e5608';
+
 
 // UI methods.
 app.ui = {};
@@ -56,6 +68,8 @@ app.ui.meos = {};
 app.ui.meos.sendToMeosEnabled = null;
 app.ui.meos.sendToMeosIP = null;
 app.ui.meos.sendToMeosIPPort = null;
+app.ui.misc = {};
+app.ui.misc.deviceName = null;
 
 // Timer that updates the device list and removes inactive
 // devices in case no devices are found by scan.
@@ -76,7 +90,6 @@ app.onDeviceReady = function()
 	//alert('device ready');
 	$(":mobile-pagecontainer").pagecontainer( "change", "#page-device-scan", { } );
 	app.ui.showPredefinedChannelPage();
-	app.ui.onStartScanButton();
 };
 
 app.ui.showPredefinedChannelPage = function()
@@ -192,6 +205,15 @@ app.ui.updateBackgroundColor = function()
 	} else {
 		$('#meos').css('background-color','white');
 	}
+	// device name
+	console.log(app.ui.misc.deviceName);
+	console.log(app.ui.getWiRocDeviceName());
+	if (app.ui.misc.deviceName != app.ui.getWiRocDeviceName())
+	{
+		$('#devicename').css('background-color','#FFEFD5');
+	} else {
+		$('#devicename').css('background-color','white');
+	}
 };
 
 // Display the device list.
@@ -295,7 +317,7 @@ app.ui.getChannel = function() {
 
 app.writeChannel = function(callback)
 {
-
+        console.log('writeChannel enter');
 	var channel = parseInt(app.ui.getChannel());
 	var service = evothings.ble.getService(app.connectedDevice, app.radioService2)
 	var characteristic = evothings.ble.getCharacteristic(service, app.radioChannelCharacteristic)
@@ -916,7 +938,9 @@ app.ui.onReadBasicButton = function() {
 };
 
 app.ui.onApplyBasicButton = function() {
+        console.log('onApplyBasicButton');
 	app.writeChannel(function() {
+        	console.log('writeChannel2');
 		app.writeAcknowledgementRequested(function() {
 			app.writeDataRate(function() {
 				app.radioSuccessBar.show({
@@ -965,6 +989,34 @@ app.ui.onApplyMeosButton = function() {
 
 app.ui.onGetNetworkWifiListButton = function() {
 	app.getNetworkWifiList(app.ui.displayNetworkWifiList);
+};
+
+// Device name
+app.ui.onApplyDeviceNameButton = function()
+{
+	var devName = app.ui.getWiRocDeviceName();
+	console.log("Device name entered: " + devName);
+	app.writeWiRocSetting('WiRocDeviceName', devName,  function() {
+		app.miscDeviceNameSuccessBar.show({
+			html: 'Device name saved (reboot required)'
+		});
+		app.getWiRocSettings(app.ui.displayWiRocSettings);
+	}, function(error) {
+		app.miscDeviceNameErrorBar.show({
+			html: 'Error saving device name: ' + error,
+		});
+	});
+};
+
+app.ui.getWiRocDeviceName = function()
+{
+	var devName = $('#wirocdevicename').val();
+	return devName;
+};
+
+app.ui.onReadDeviceNameButton = function()
+{
+	app.getWiRocSettings(app.ui.displayWiRocSettings);
 };
 
 // Status
@@ -1089,9 +1141,17 @@ app.ui.onRefreshServicesButton = function() {
 
 
 // Settings
-app.writeWiRocSetting = function(key, value, callback)
+app.writeWiRocSetting = function(key, value, callback, errorCallback)
 {
 	console.log('write setting');
+	var errorCB = errorCallback;
+	if (errorCallback == null) {
+		errorCB = function(error) {
+			app.miscSettingsErrorBar.show({
+				html: 'Error saving setting: ' + error,
+			});
+		};
+	}
 	var te = new TextEncoder("utf-8").encode(key+';'+value);
 	var settingArray = new Uint8Array(te);
 	var service = evothings.ble.getService(app.connectedDevice, app.miscService)
@@ -1101,11 +1161,7 @@ app.writeWiRocSetting = function(key, value, callback)
 		characteristic,
 		settingArray,
 		callback,
-		function(error) {
-			app.miscSettingsErrorBar.show({
-				html: 'Error saving setting: ' + error,
-			});
-		}
+		errorCB
 	);
 };
 
@@ -1140,8 +1196,14 @@ app.ui.displayWiRocSettings = function(settings) {
 			{Key: setting.Key, Value: setting.Value},
 			app.ui.onEditSetting);
 		table.append(element);
+
+		if (setting.Key == 'WiRocDeviceName') {
+			$('#wirocdevicename').val(setting.Value);
+			app.ui.misc.deviceName = setting.Value;
+		}
 	}
 	$('#wiroc-settings-content').append(table);
+	app.ui.updateBackgroundColor();
 };
 
 app.ui.onRefreshSettingsButton = function() {
@@ -1165,8 +1227,12 @@ app.ui.onEditSettingSaveButton = function(event) {
 	var key = $('#settingKey').val();
 	var value = $('#settingValue').val();
 	app.writeWiRocSetting(key, value, function() {
+		app.miscSettingsSuccessBar.show({
+			html: 'Setting saved'
+		});
+		$('#wiroc-settings-content').html('');
 		app.getWiRocSettings(app.ui.displayWiRocSettings);
-	});
+	}, null);
 };
 
 app.appendBuffer = function(buffer1, buffer2) {
@@ -1200,7 +1266,6 @@ app.ui.displayPunches = function(punches) {
 };
 
 app.subscribePunches = function() {
-	console.log("subscribePunches / unsubscribe: '" + $('#btnSubscribePunches').data('subscribe') + "'");
 	console.log("subscribePunches / unsubscribe: '" + $('#btnSubscribePunches').data('subscribe') + "'");
 	var service = evothings.ble.getService(app.connectedDevice, app.miscService);
 	var characteristic = evothings.ble.getCharacteristic(service, app.miscPunchesCharacteristic);
@@ -1246,8 +1311,67 @@ app.ui.onSubscribePunchesButton = function() {
 	app.subscribePunches();
 };
 
+// Delete Punches
+app.deletePunches = function() {
+	console.log('Delete punches');
+	var te = new TextEncoder("utf-8").encode('deletepunches');
+	var operationName = new Uint8Array(te);
+	var service = evothings.ble.getService(app.connectedDevice, app.miscService);
+	var characteristic = evothings.ble.getCharacteristic(service, app.miscDatabaseCharacteristic);
+	evothings.ble.writeCharacteristic(
+		app.connectedDevice,
+		characteristic,
+		operationName,
+		function() {
+			console.log('Punches deleted');
+			app.miscDatabaseSuccessBar.settings.autohide = true;
+			app.miscDatabaseSuccessBar.show({
+			    html: 'Punches deleted'
+			});
+		},
+		function(error) {
+			app.miscDatabaseErrorBar.show({
+			    html: 'Error when deleting punches: ' + error
+			});
+			app.miscDatabaseErrorBar.hide();
+		}
+	);
+};
 
+app.ui.onDeletePunchesButton = function() {
+	app.deletePunches();
+};
 
+// Drop tables
+app.dropTables = function() {
+	console.log('Delete punches');
+	var te = new TextEncoder("utf-8").encode('droptables');
+	var operationName = new Uint8Array(te);
+	var service = evothings.ble.getService(app.connectedDevice, app.miscService);
+	var characteristic = evothings.ble.getCharacteristic(service, app.miscDatabaseCharacteristic);
+	evothings.ble.writeCharacteristic(
+		app.connectedDevice,
+		characteristic,
+		operationName,
+		function() {
+			console.log('Tables dropped');
+			app.miscDatabaseAdvSuccessBar.settings.autohide = true;
+			app.miscDatabaseAdvSuccessBar.show({
+			    html: 'Tables dropped'
+			});
+		},
+		function(error) {
+			app.miscDatabaseAdvErrorBar.show({
+			    html: 'Error when dropping tables: ' + error
+			});
+			app.miscDatabaseAdvErrorBar.hide();
+		}
+	);
+};
+
+app.ui.onDropTablesButton = function() {
+	app.dropTables();
+};
 
 app.connect = function(device)
 {
@@ -1278,6 +1402,7 @@ app.onConnected = function(device)
 	app.connectedDevice = device;
 	$(":mobile-pagecontainer").pagecontainer( "change", "#page-basic-config", { } );
 	$('#device-name').text(device.name);
+	$('#wirocdevicename').val(device.name);
 	$('#tab-radio').css('ui-btn-active');
 	$('#tab-radio').trigger('click');
 	app.readBasicSettings();
@@ -1288,6 +1413,10 @@ app.onDisconnected = function(device)
 {
 	console.log('Disconnected from device');
 	app.connectedDevice = null;
+	$.mobile.pageContainer.pagecontainer("change", "#page-device-scan", { });
+	app.searchDevicesErrorBar.show({
+		html: 'Device disconnected'
+	});
 };
 
 
