@@ -1343,9 +1343,9 @@ app.ui.onDeletePunchesButton = function() {
 };
 
 // Drop tables
-app.dropTables = function() {
+app.dropAllTables = function() {
 	console.log('Delete punches');
-	var te = new TextEncoder("utf-8").encode('droptables');
+	var te = new TextEncoder("utf-8").encode('dropalltables');
 	var operationName = new Uint8Array(te);
 	var service = evothings.ble.getService(app.connectedDevice, app.miscService);
 	var characteristic = evothings.ble.getCharacteristic(service, app.miscDatabaseCharacteristic);
@@ -1369,8 +1369,8 @@ app.dropTables = function() {
 	);
 };
 
-app.ui.onDropTablesButton = function() {
-	app.dropTables();
+app.ui.onDropAllTablesButton = function() {
+	app.dropAllTables();
 };
 
 app.connect = function(device)
