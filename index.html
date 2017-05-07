@@ -369,6 +369,11 @@
 				app.ui.updateBackgroundColor();
 			});
 
+			// Scan header
+			$('#ScanHeader').click(function() {
+				evothings.ble.reset(function() { console.log('reset success'); },function() { console.log('reset fail'); });
+			});
+
 			// Menu
 			$('body').bind('hideOpenMenus', function(){
 			    $("ul:jqmData(role='menu')").find('li > ul').hide();
@@ -409,7 +414,7 @@
 <body ontouchstart=""><!-- ontouchstart="" enables low-delay CSS transitions. -->
 	<div id="page-device-scan" data-role="page">
 		<div data-role="header">
-			<h1 style="font-size:3vw">WiRoc<br/>Config</h1>
+			<h1 style="font-size:3vw" id="ScanHeader">WiRoc<br/>Config</h1>
 		</div>
 		<div id="notification-search-devices" style="height:1px"></div>
 

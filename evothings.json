@@ -1,6 +1,6 @@
 {
   "name": "wiroc-config",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "title": "WiRoc Config",
   "description": "App used to configure WiRoc devices",
   "tags": [
@@ -26,6 +26,7 @@
   "long-description": "App used to configure WiRoc devices",
   "author-name": "Henrik Larsson",
   "author-email": "laselase@gmail.com",
-  "author-url": "https://asdf.asdf",
-  "cordova-id": "com.evothings.samples.WiRoc.Config"
+  "author-url": "https://github.com/henla464/WiRoc-Config/",
+  "cordova-id": "com.evothings.samples.WiRoc.Config",
+  "icon": "res/icon-512x512.png"
 }

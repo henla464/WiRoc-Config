@@ -1,8 +1,4 @@
 
-
-//evothings.loadScript('libs/evothings/easyble/easyble.dist.js');
-
-
 // Application object.
 var app = {};
 
@@ -1388,17 +1384,18 @@ app.connect = function(device)
 		device,
 		app.onConnected,
 		app.onDisconnected,
-		app.onConnectError);
+		app.onConnectError,
+		{ discoverServices: true });
 };
 
 
 // Called when device is connected.
 app.onConnected = function(device)
 {
+    	console.log('Connected to device');
 	app.devices = {};
 	app.ui.displayDeviceList();
 
-    	console.log('Connected to device');
 	app.connectedDevice = device;
 	$(":mobile-pagecontainer").pagecontainer( "change", "#page-basic-config", { } );
 	$('#device-name').text(device.name);
@@ -1414,6 +1411,7 @@ app.onDisconnected = function(device)
 	console.log('Disconnected from device');
 	app.connectedDevice = null;
 	$.mobile.pageContainer.pagecontainer("change", "#page-device-scan", { });
+	evothings.ble.reset(function() { console.log('reset success'); },function() { console.log('reset fail'); });
 	app.searchDevicesErrorBar.show({
 		html: 'Device disconnected'
 	});
@@ -1424,13 +1422,16 @@ app.onDisconnected = function(device)
 app.onConnectError = function(error)
 {
     console.log('Connect error: ' + error);
+    app.searchDevicesErrorBar.show({
+		html: 'Connect error: ' + error
+    });
+    evothings.ble.reset(function() { console.log('reset success'); },function() { console.log('reset fail'); });
 };
 
 app.disconnect = function()
 {
 	if (app.connectedDevice) {
 		console.log('disconnect');
-		//app.connectedDevice.close();
 		evothings.ble.close(app.connectedDevice);
 		app.connectedDevice = null;
 	}	
