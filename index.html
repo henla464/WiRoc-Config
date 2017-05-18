@@ -269,6 +269,26 @@
 		div.advanced-config div.ui-checkbox{
 			display:block;
 		}
+
+		.testPunchAckDiv .ui-checkbox {
+			margin-top:0px;
+			margin-bottom:0px;
+		}
+
+		.ui-block-a.test-punch {
+			width:35%;
+			padding-right:2px;
+		}
+		.ui-block-b.test-punch {
+			width:40%;
+			padding-right:2px;
+		}
+		.ui-block-c.test-punch {
+			width:25%;
+		}
+		.ui-block-a.test-punch .ui-field-contain div {
+			margin-top:2px;
+		}
     </style>
 	<script>
 	// Redirect console.log to Evothings Workbench.
@@ -394,6 +414,7 @@
 
 			// about link
 			$( "#popup-about-link" ).on("click", function (event, ui) { $( "#popup-about" ).popup( "open" ); return false; });
+			$( "#popup-about-2-link" ).on("click", function (event, ui) { $( "#popup-about-2" ).popup( "open" ); return false; });
 
 			$( "#tabs-main" ).on( "tabsactivate", function( event, ui ) { 
 				app.basicConfigTab = ui.newTab.data("tabname");
@@ -419,7 +440,7 @@
 		<div id="notification-search-devices" style="height:1px"></div>
 
  		<div role="main" class="ui-content" class="page">
-			<!--<a href="#page-basic-config" data-transition="slide">Slide</a>-->
+			<a href="#page-basic-config" data-transition="slide">Slide</a>
 			<a href="#" onclick="app.ui.onStartScanButton()" class="ui-btn ui-btn-inline ui-corner-all start-button">START SCAN</a>
 			<a href="#" onclick="app.ui.onStopScanButton()" class="ui-btn ui-btn-inline ui-corner-all stop-button">STOP SCAN</a>
 	
@@ -461,7 +482,7 @@
 				<h1>WiRoc Config</h1>
 
 				<table>
-					<tr><td>Version</td><td>1.0</td></tr>
+					<tr><td>Version</td><td>0.1.1</td></tr>
 					<tr><td></td><td></td></tr>
 					<tr><td></td><td></td></tr>
 					<tr><td></td><td></td></tr>
@@ -475,7 +496,8 @@
 			 	<div data-role="navbar">
 					<ul>
 					<li data-tabname="radio"><a href="#radio" data-ajax="false" id="tab-radio" class="ui-btn-active ui-state-persist">Radio</a></li>
-					<li data-tabname="meos"><a href="#meos" data-ajax="false" id="tab-meos">MeOS</a></li>
+					<li data-tabname="meos"><a href="#meos" data-ajax="false" id="tab-meos">SIRAP-tcp/ip</a></li>
+					<li data-tabname="test"><a href="#test" data-ajax="false" id="tab-test">Test</a></li>
 					<li data-tabname="network"><a href="#network" data-ajax="false" id="tab-network">Network</a></li>
 					<li data-tabname="database"><a href="#database" data-ajax="false" id="tab-database">Database</a></li>
 					</ul>
@@ -545,6 +567,50 @@
 						</div>
 					</div>
 				</div>
+				<div id="test" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-test" style="height:1px"></div>
+					<div class="ui-grid-b">
+						<div class="ui-block-a test-punch">
+							<div data-role="fieldcontain">
+								<label for="siNumber" class="ui-hidden-accessible">SI no:</label>
+								<input type="number" name="siNumber" id="siNumber" value="" style="margin-top:2px" placeholder="SI Number">
+							</div>
+						</div>
+						<div class="ui-block-b test-punch">
+							<div data-role="fieldcontain">
+							<label for="noOfTestPunches" class="ui-hidden-accessible">Number of punches to send:</label>
+							<select name="noOfTestPunches" id="noOfTestPunches" data-native-menu="false">
+								<option value="0">Times</option>
+								<option value="1">1</option>
+								<option value="2">2</option>
+								<option value="3">3</option>
+								<option value="4">4</option>
+								<option value="5">5</option>
+								<option value="6">6</option>
+								<option value="7">7</option>
+								<option value="8">8</option>
+								<option value="9">9</option>
+								<option value="10">10</option>
+								<option value="15">15</option>
+								<option value="20">20</option>
+								<option value="30">30</option>
+								<option value="50">50</option>
+								<option value="100">100</option>
+							</select>
+							</div>
+						</div>
+						<div class="ui-block-c test-punch">
+							<div data-role="fieldcontain" class="testPunchAckDiv">
+		 						<label for="testPunchAck" style="font-size:16px">Ack</label>
+								<input type="checkbox" id="testPunchAck" />
+							</div>
+						</div>
+						<button id="testPunch" onclick="app.sendTestPunches()" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">Send test punches</button>
+					</div>
+
+					<div id="test-punches" class="dynamic">Empty list</div>
+					
+				</div>
 				<div id="network" class="ui-body-d ui-content" style="padding:2vw">
 					<div id="notification-network" style="height:1px"></div>
 					<div style="text-align:left">
@@ -607,14 +673,14 @@
 			<li>
 				<a href="#" onclick="return false;" data-role="button" data-icon="gear" data-inline="true" data-iconpos="right">Options</a>
 				<ul data-role="listview" data-inset="true">
-					<li><a href="#" id="popup-about-link">About</a></li>
+					<li><a href="#" id="popup-about-2-link">About</a></li>
 
 				</ul>
 			</li>
 			</ul>      
 		</div>
 
-		<div data-role="popup" id="popup-about" data-dismissible="true">
+		<div data-role="popup" id="popup-about-2" data-dismissible="true">
 			<a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
 			<div data-role="header" data-theme="a">
 				<h1>About</h1>
@@ -623,7 +689,7 @@
 				<h1>WiRoc Config</h1>
 
 				<table>
-					<tr><td>Version</td><td>1.0</td></tr>
+					<tr><td>Version</td><td>0.1.1</td></tr>
 					<tr><td></td><td></td></tr>
 					<tr><td></td><td></td></tr>
 					<tr><td></td><td></td></tr>
