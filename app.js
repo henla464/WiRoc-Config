@@ -27,6 +27,8 @@ app.miscDatabaseErrorBar = null;
 app.miscDatabaseSuccessBar = null;
 app.miscDatabaseAdvErrorBar = null;
 app.miscDatabaseAdvSuccessBar = null;
+app.miscTestPunchesSuccessBar = null;
+app.miscTestPunchesErrorBar = null;
 
 app.radioService = 'f6026b69-9254-fd82-0242-60d9aaff57dc';
 app.radioService2 =                      'dc57ffaa-d960-4202-82fd-5492696b02f6';
@@ -52,7 +54,7 @@ app.miscStatusCharacteristic =			'fb880903-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscSettingsCharacteristic = 		'fb880904-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscServicesCharacteristic = 		'fb880905-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscDatabaseCharacteristic = 		'fb880906-4ab2-40a2-a8f0-14cc1c2e5608';
-
+app.miscTestPunchesCharacteristic = 		'fb880907-4ab2-40a2-a8f0-14cc1c2e5608';
 
 // UI methods.
 app.ui = {};
@@ -72,6 +74,7 @@ app.ui.misc.deviceName = null;
 app.ui.updateTimer = null;
 
 app.punches = null;
+app.testPunches = null;
 
 app.initialize = function()
 {
@@ -83,7 +86,7 @@ app.initialize = function()
 
 app.onDeviceReady = function()
 {
-	//alert('device ready');
+	console.log('device ready');
 	$(":mobile-pagecontainer").pagecontainer( "change", "#page-device-scan", { } );
 	app.ui.showPredefinedChannelPage();
 };
@@ -1285,6 +1288,7 @@ app.subscribePunches = function() {
 		$('#btnSubscribePunches').text("Unsubscribe");
 		$('#btnSubscribePunches').data("subscribe", false);
 	} else {
+		app.punches = null;
 		evothings.ble.disableNotification(
 			app.connectedDevice,
 			characteristic,
@@ -1369,6 +1373,185 @@ app.ui.onDropAllTablesButton = function() {
 	app.dropAllTables();
 };
 
+app.ui.displayTestPunches = function(testPunches) {
+	console.log('displayTestPunches 1: ' +  evothings.ble.fromUtf8(testPunches));
+	if (app.testPunches == null) {
+		app.testPunches = testPunches;
+	} else {
+		app.testPunches = app.appendBuffer(app.testPunches, testPunches);
+	}
+	if (testPunches.byteLength < 20) {
+		// we received all data from this push
+
+		var rawTestPunches =  evothings.ble.fromUtf8(app.testPunches);
+		app.testPunches = null; // reset buffer
+		console.log('displayTestPunches: ' + rawTestPunches);
+		var punchesObj = JSON.parse(rawTestPunches);
+
+		if (false) { //punchesObj.punches.length == 0
+			// no punches, must mean we received all
+			console.log("no punches, must mean we received all");
+			var service = evothings.ble.getService(app.connectedDevice, app.miscService);
+			var characteristic = evothings.ble.getCharacteristic(service, app.miscTestPunchesCharacteristic);
+			evothings.ble.disableNotification(
+				app.connectedDevice,
+				characteristic,
+				function(data) {
+					console.log('unsubscribe test punches');
+					//$('#btnSubscribePunches').text("Subscribe");
+					//$('#btnSubscribePunches').data("subscribe", true);
+				},
+				function(error) {
+					console.log('unsubscribe test punches error');
+					app.miscTestPunchesErrorBar.show({
+						html: 'Error unsubscribe: ' + error
+					});
+				}
+			);
+		} else {
+			var table = $("#wiroc-test-punches-table tbody");
+			for (var i = 0; i < punchesObj.punches.length; i++) {
+				var punch = punchesObj.punches[i];
+				var trs = table.find('tr[data-id="' + punch.Id + '"]');
+				var ackReq = $('#testPunchAck').prop("checked")
+				var noOfSendTriesColor = "";
+				if (punch.NoOfSendTries == 1 && ((punch.Status == 'Acked' && ackReq) || (punch.Status == 'Not acked' && !ackReq))) {
+					// Success
+					noOfSendTriesColor = ' style="background-color:#2ECC71"';
+				} else if (punch.NoOfSendTries > 1) {
+					noOfSendTriesColor = ' style="background-color:#E74C3C"';
+				}
+				var statusColor = "";
+				if ((punch.Status == 'Acked' && ackReq) || (punch.Status == 'Not acked' && !ackReq)) {
+					// Success
+					statusColor = ' style="background-color:##2ECC71"';
+				} else if (punch.NoOfSendTries > 1 && (punch.Status == 'Not sent' || punch.Status == 'Not acked')) {
+					statusColor = ' style="background-color:#E74C3C"';
+				}
+				var rowText = '<tr data-id="' + punch.Id + '" data-subscrId="' + punch.SubscrId + '"><td>' + punch.SINo + '</td><td>' + punch.Time + '</td><td' + noOfSendTriesColor +'>' + punch.NoOfSendTries + '</td><td'+ statusColor + '>' + punch.Status + '</td></tr>';
+				var rowElement = $(rowText);
+				if (trs.length > 0) {
+					trs[0].replaceWith(rowElement[0]);
+					console.log("replace");
+				} else {
+					table.append(rowElement);
+					console.log("append");
+				}
+
+	
+				// calculate percentages
+				var triesPercentage = "Unknown";
+				var statusPercentage = "Unknown"
+				if (ackReq) {
+					var sumNoOfFailedTries = 0;
+					var sumNoOfSuccessTries = 0;
+					var sumNoOfTries = 0;
+					var allTrs = table.find('tr');
+					for (var j = 0; j < allTrs.length; j++) {
+						var noOfSendTries = $(allTrs[j]).find('td').eq(2).html();
+						var status = $(allTrs[j]).find('td').eq(3).html();
+						console.log("noOfSendTries: " + noOfSendTries);
+						console.log("status: " + status);
+						if (status == 'Not sent' || status == 'Not acked') {
+							sumNoOfTries += parseInt(noOfSendTries);
+							sumNoOfFailedTries += parseInt(noOfSendTries);
+						} else if (status == 'Acked') {
+							sumNoOfTries += parseInt(noOfSendTries);
+							sumNoOfFailedTries += parseInt(noOfSendTries) - 1;
+							sumNoOfSuccessTries += 1;
+						}
+					}
+				
+					triesPercentage = 0;
+					if (sumNoOfTries > 0) { Math.round(sumNoOfSuccessTries*100 / sumNoOfTries); }
+					statusPercentage = 0;
+					if (allTrs.length > 0) { Math.round(sumNoOfSuccessTries*100 / allTrs.length); }
+					var tfoot = $("#wiroc-test-punches-table tfoot");
+					var summaryTrs = tfoot.find('tr[data-id="summary"]');
+				}
+				var sumRowElement = $('<tr data-id="summary"><td colspan="2">Success %</td><td>' + triesPercentage + '%</td><td>' + statusPercentage + '%</td></tr>');
+				if (summaryTrs.length > 0) {
+					summaryTrs[0].replaceWith(sumRowElement[0]);
+				}				
+			}
+		}
+	}
+	console.log("displaytestPunches end");
+};
+
+app.ui.onSendTestPunchesStopButton = function(event) {
+	app.testPunches = null;
+	var service = evothings.ble.getService(app.connectedDevice, app.miscService);
+	var characteristic = evothings.ble.getCharacteristic(service, app.miscTestPunchesCharacteristic);
+	evothings.ble.disableNotification(
+		app.connectedDevice,
+		characteristic,
+		function(data) {
+			console.log('unsubscribe test punches');
+			$('#stopTestPunch').addClass('ui-disabled');
+			$('#testPunchLoading').hide();
+		},
+		function(error) {
+			console.log('unsubscribe test punches error');
+			app.miscTestPunchesErrorBar.show({
+				html: 'Error unsubscribe: ' + error
+			});
+		}
+	);
+};
+
+app.ui.onSendTestPunchesButton = function(event) {
+	console.log('onSendTestPunchesButton');
+	app.testPunches = null;
+
+	$('#stopTestPunch').removeClass('ui-disabled');
+	$('#testPunchLoading').show();
+
+
+	var noOfTestPunchesToSend = $("#noOfTestPunches option:selected").val();
+	var siNumber = $("#siNumber").val();
+	var sendInterval = $("#sendInterval").val();
+	var ackReq = $('#testPunchAck').prop("checked") ? 1 : 0;
+	var param = noOfTestPunchesToSend + ';' + sendInterval + ';' + siNumber + ';' + ackReq;
+
+	var te = new TextEncoder("utf-8").encode(param);
+	var parameters = new Uint8Array(te);
+	var service = evothings.ble.getService(app.connectedDevice, app.miscService);
+	var characteristic = evothings.ble.getCharacteristic(service, app.miscTestPunchesCharacteristic);
+	evothings.ble.writeCharacteristic(
+		app.connectedDevice,
+		characteristic,
+		parameters,
+		function() {
+			console.log('Sending test punches initiated');
+			app.miscTestPunchesSuccessBar.settings.autohide = true;
+			app.miscTestPunchesSuccessBar.show({
+			    html: 'Sending test punches initiated'
+			});
+			evothings.ble.enableNotification(
+				app.connectedDevice,
+				characteristic,
+				function(data) {
+					console.log('subscribe test punches, data received');
+					app.ui.displayTestPunches(data);
+				},
+				function(error) {
+					console.log('subscribe test punches error');
+					app.miscTestPunchesErrorBar.show({
+						html: 'Error subscribePunches: ' + error
+					});
+				}
+			);
+		},
+		function(error) {
+			app.miscTestPunchesErrorBar.show({
+			    html: 'Error sending test punches: ' + error
+			});
+			app.miscTestPunchesErrorBar.hide();
+		}
+	);
+};
+
 app.connect = function(device)
 {
         evothings.ble.stopScan()
@@ -1380,6 +1563,12 @@ app.connect = function(device)
 	$('#wiroc-services-content').html('');
 	$('#wiroc-settings-content').html('');
 	$("#wiroc-punches-table tbody").html('');
+	$("#wiroc-test-punches-table tbody").html('');
+	app.testPunches = null;
+	app.punches = null;
+	$('#stopTestPunch').addClass('ui-disabled');
+	$('#testPunchLoading').hide();
+	
         evothings.ble.connectToDevice(
 		device,
 		app.onConnected,

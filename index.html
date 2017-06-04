@@ -275,19 +275,54 @@
 			margin-bottom:0px;
 		}
 
-		.ui-block-a.test-punch {
+		.test-punch-row-1 .ui-block-a.test-punch {
 			width:35%;
 			padding-right:2px;
 		}
-		.ui-block-b.test-punch {
+		.test-punch-row-1 .ui-block-b.test-punch {
 			width:40%;
 			padding-right:2px;
 		}
-		.ui-block-c.test-punch {
+		.test-punch-row-1 .ui-block-c.test-punch {
 			width:25%;
 		}
+
+		.test-punch-row-2 .ui-block-a.test-punch {
+			padding-right:2px;
+			width:35%;
+		}
+		.test-punch-row-2 .ui-block-b.test-punch {
+			padding-right:2px;
+			width:65%;
+		}
+
 		.ui-block-a.test-punch .ui-field-contain div {
 			margin-top:2px;
+		}
+
+		.test-punch div.ui-field-contain {
+			margin-top:2px;
+			margin-bottom:2px;
+		}
+		.test-punch div.ui-field-contain .ui-btn {
+			margin-top:0px;
+		}
+		.test-punch-row-3 .ui-loader {
+			display: none;
+			z-index: 9999999;
+			border:0;
+			left:50%;
+			position:relative;
+			top:25px;
+		}
+		.test-punch-row-1 .ui-field-contain {
+			padding:0px;
+		}
+		.test-punch-row-2 .ui-field-contain {
+			padding:0px;
+		}
+		.test-punch-row-3 .ui-field-contain {
+			padding:0px;
 		}
     </style>
 	<script>
@@ -313,6 +348,7 @@
 			app.miscSettingsSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-settings'), autohide: true, backgroundColor: '#99ff99' });
 			app.miscDatabaseSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database'), autohide: true, backgroundColor: '#99ff99' });
 			app.miscDatabaseAdvSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database-adv'), autohide: true, backgroundColor: '#99ff99' });
+			app.miscTestPunchesSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-test'), autohide: true, backgroundColor: '#99ff99' });
 
 			app.searchDevicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-search-devices'), autohide: true, backgroundColor: '#ffbf00' });
 			app.batteryErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#ffbf00' });
@@ -325,10 +361,10 @@
 			app.miscServicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-services'), autohide: true, backgroundColor: '#ffbf00' });
 			app.miscDatabaseErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database'), autohide: true, backgroundColor: '#ffbf00' });
 			app.miscDatabaseAdvErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database-adv'), autohide: true, backgroundColor: '#ffbf00' });
+			app.miscTestPunchesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-test'), autohide: true, backgroundColor: '#ffbf00' });
 			
 			$('#wifiConnect').click(app.ui.onWifiPasswordConnectButton);
 			$('#saveSettingButton').click(app.ui.onEditSettingSaveButton);
-
 
 			$("input[name='radio-choice-channel-type']").on( "change", function(event, ui) {
 				if (this.value == 'custom') {
@@ -345,9 +381,11 @@
 					if (urlArray.length > 1)
 					{
 						toPageName = urlArray[1];
+						console.log("toPageName set to: " + toPageName);
 					}
 					if (toPageName == "page-device-scan") 
 					{
+						console.log("pagecontainerbeforechange page-device-scan");
 						app.disconnect();
 					} else if (toPageName == "page-advanced-config") 
 					{
@@ -569,11 +607,11 @@
 				</div>
 				<div id="test" class="ui-body-d ui-content" style="padding:2vw">
 					<div id="notification-test" style="height:1px"></div>
-					<div class="ui-grid-b">
+					<div class="ui-grid-b test-punch-row-1">
 						<div class="ui-block-a test-punch">
 							<div data-role="fieldcontain">
 								<label for="siNumber" class="ui-hidden-accessible">SI no:</label>
-								<input type="number" name="siNumber" id="siNumber" value="" style="margin-top:2px" placeholder="SI Number">
+								<input type="number" name="siNumber" id="siNumber" value="999999" style="margin-top:2px" placeholder="SI Number"/>
 							</div>
 						</div>
 						<div class="ui-block-b test-punch">
@@ -581,15 +619,12 @@
 							<label for="noOfTestPunches" class="ui-hidden-accessible">Number of punches to send:</label>
 							<select name="noOfTestPunches" id="noOfTestPunches" data-native-menu="false">
 								<option value="0">Times</option>
-								<option value="1">1</option>
+								<option value="1" selected>1</option>
 								<option value="2">2</option>
 								<option value="3">3</option>
 								<option value="4">4</option>
-								<option value="5">5</option>
 								<option value="6">6</option>
-								<option value="7">7</option>
 								<option value="8">8</option>
-								<option value="9">9</option>
 								<option value="10">10</option>
 								<option value="15">15</option>
 								<option value="20">20</option>
@@ -605,11 +640,40 @@
 								<input type="checkbox" id="testPunchAck" />
 							</div>
 						</div>
-						<button id="testPunch" onclick="app.sendTestPunches()" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">Send test punches</button>
+						
+					</div>
+					<div class="ui-grid-a test-punch-row-2">
+						<div class="ui-block-a test-punch">
+							<div data-role="fieldcontain">
+								<label for="sendInterval" class="ui-hidden-accessible">Interval:</label>
+								<input type="number" name="sendInterval" id="sendInterval" value="6000" style="margin-top:2px" placeholder="Interval"/>
+							</div>
+						</div>
+						<div class="ui-block-b test-punch">
+							<div data-role="fieldcontain">
+								<a href="#" id="testPunch" onclick="app.ui.onSendTestPunchesButton()" class="ui-btn ui-corner-all ui-shadow ui-btn-icon-left ui-icon-check">Send test punches</a>
+							</div>
+						</div>	   
 					</div>
 
-					<div id="test-punches" class="dynamic">Empty list</div>
-					
+					<div class="ui-grid-a test-punch-row-3">
+						<div class="ui-block-a test-punch">
+							<div id="testPunchLoading" class="ui-loader ui-corner-all ui-body-a ui-loader-default"><span class="ui-icon-loading"></span><h1></h1></div>
+						</div>
+						<div class="ui-block-b test-punch">
+							<div data-role="fieldcontain">
+								<a href="#" id="stopTestPunch" onclick="app.ui.onSendTestPunchesStopButton()" class="ui-btn ui-corner-all ui-shadow ui-btn-icon-left ui-icon-delete ui-disabled">Stop updates</a>
+							</div>
+						</div>	   
+					</div>
+
+					<div id="wiroc-test-punches-content">
+						<table id="wiroc-test-punches-table" width="100%" border=1>
+							<thead><tr><th align=\"left\">SINo</th><th align=\"left\">Time</th><th>Tries</th><th>Status</th></tr></thead>
+							<tfoot><tr data-id="summary"><td colspan=2">Success %</td><td>Unknown%</td><td>Unknown%</td></tr></tfoot>
+							<tbody></tbody>
+						</table>
+					</div>
 				</div>
 				<div id="network" class="ui-body-d ui-content" style="padding:2vw">
 					<div id="notification-network" style="height:1px"></div>
