@@ -188,22 +188,29 @@
 		div.battery .level.low {
 			background-color: #E74C3C;  
 		}
+		div.battery .level.charging.high {
+			animation: highlighthigh 2s cubic-bezier(1,-0.06, 0.6, 0.81) 0s infinite alternate;
+		}
+		div.battery .level.charging.med {
+			animation: highlightmed 2s cubic-bezier(1,-0.06, 0.6, 0.81) 0s infinite alternate;
+		}
+		div.battery .level.charging.low {
+			animation: highlightlow 2s cubic-bezier(1,-0.06, 0.6, 0.81) 0s infinite alternate;
+		}
+		@keyframes highlighthigh {
+		    from { background-color: #27AE60;}
+		    to {background-color: #bdf0d2;}
+		}
+		@keyframes highlightmed {
+		    from { background-color: #E67E22;}
+		    to {background-color: #f6d0af;}
+		}
+		@keyframes highlightlow {
+		    from { background-color: #E74C3C;}
+		    to {background-color: #f6bcb6;}
+		}
 
-		div.battery .level.charging {
-			background-color: #27AE60;  
-			width: 100%;
-			text-align: center;
-		}
-		div.battery .level.charging:before {
-			content: '\e800';
-			display: block;
-			height: 100%;
-			width: 100%;
-			color: #fff;
-			line-height: 40px;
-			font-family: 'Battery';
-			font-size: 25px;
-		}
+
 		#menu-left {
 			font-size: 3.5vw;
 			padding-left:32px;
@@ -289,7 +296,6 @@
 
 		.test-punch-row-2 .ui-block-a.test-punch {
 			padding-right:2px;
-			width:35%;
 		}
 		.test-punch-row-2 .ui-block-b.test-punch {
 			padding-right:2px;
@@ -370,6 +376,7 @@
 				if (this.value == 'custom') {
 					app.ui.onShowCustomChannelPage();
 				} else {
+					console.log(" change event ");
 					app.ui.onShowPredefinedChannelPage();
 				}
 			});
@@ -496,7 +503,7 @@
 			<h1 style="font-size:3vw">WiRoc<br/>Config</h1>
 			<div id="battery-indicator">
 				<div id="battery" class="battery">
-					<div class="level"></div>
+					<div class="level charging"></div>
 				</div>
 			</div>
 			<ul id="menu-right" data-role="menu">
@@ -586,7 +593,7 @@
 				<div id="meos" class="ui-body-d ui-content" style="padding:2vw">
 					<div id="notification-meos" style="height:1px"></div>
 					<div class="ui-field-contain advanced-config">
-						<label for="sendtomeosenabled">Send punches to MeOS</label>
+						<label for="sendtomeosenabled">Send punches via SIRAP-tcp/ip</label>
 						<input type="checkbox" name="sendtomeosenabled" id="sendtomeosenabled">
 					</div>
 					<div class="ui-field-contain advanced-config">
@@ -635,21 +642,25 @@
 							</div>
 						</div>
 						<div class="ui-block-c test-punch">
-							<div data-role="fieldcontain" class="testPunchAckDiv">
-		 						<label for="testPunchAck" style="font-size:16px">Ack</label>
-								<input type="checkbox" id="testPunchAck" />
-							</div>
-						</div>
-						
-					</div>
-					<div class="ui-grid-a test-punch-row-2">
-						<div class="ui-block-a test-punch">
 							<div data-role="fieldcontain">
-								<label for="sendInterval" class="ui-hidden-accessible">Interval:</label>
-								<input type="number" name="sendInterval" id="sendInterval" value="6000" style="margin-top:2px" placeholder="Interval"/>
+							<label for="sendInterval" class="ui-hidden-accessible">Interval:</label>
+							<select name="sendInterval" id="sendInterval" data-native-menu="false">
+								<option value="0">Interval</option>
+								<option value="500" selected>0.5 s</option>
+								<option value="1000">1 s</option>
+								<option value="1500">1.5 s</option>
+								<option value="2000">2 s</option>
+								<option value="3000">3 s</option>
+								<option value="4000">4 s</option>
+								<option value="5000">5 s</option>
+								<option value="10000">10 s</option>
+								<option value="15000">15 s</option>
+							</select>
 							</div>
 						</div>
-						<div class="ui-block-b test-punch">
+					</div>
+					<div class="ui-grid-solo test-punch-row-2">
+						<div class="ui-block-a test-punch">
 							<div data-role="fieldcontain">
 								<a href="#" id="testPunch" onclick="app.ui.onSendTestPunchesButton()" class="ui-btn ui-corner-all ui-shadow ui-btn-icon-left ui-icon-check">Send test punches</a>
 							</div>

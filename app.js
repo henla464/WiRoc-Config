@@ -29,6 +29,7 @@ app.miscDatabaseAdvErrorBar = null;
 app.miscDatabaseAdvSuccessBar = null;
 app.miscTestPunchesSuccessBar = null;
 app.miscTestPunchesErrorBar = null;
+app.miscBatteryCharacteristic = null;
 
 app.radioService = 'f6026b69-9254-fd82-0242-60d9aaff57dc';
 app.radioService2 =                      'dc57ffaa-d960-4202-82fd-5492696b02f6';
@@ -55,6 +56,7 @@ app.miscSettingsCharacteristic = 		'fb880904-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscServicesCharacteristic = 		'fb880905-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscDatabaseCharacteristic = 		'fb880906-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscTestPunchesCharacteristic = 		'fb880907-4ab2-40a2-a8f0-14cc1c2e5608';
+app.miscBatteryCharacteristic = 		'fb880908-4ab2-40a2-a8f0-14cc1c2e5608';
 
 // UI methods.
 app.ui = {};
@@ -68,6 +70,7 @@ app.ui.meos.sendToMeosIP = null;
 app.ui.meos.sendToMeosIPPort = null;
 app.ui.misc = {};
 app.ui.misc.deviceName = null;
+app.ui.misc.noOfTestPunchesToSend = null;
 
 // Timer that updates the device list and removes inactive
 // devices in case no devices are found by scan.
@@ -153,7 +156,7 @@ app.ui.onStartScanButton = function()
 	evothings.ble.startScan(
     		app.ui.deviceFound,
 		app.ui.scanError,
-		{ serviceUuids: [app.radioService, app.radioService2] });
+		{ serviceUUIDs: [app.radioService, app.radioService2] });
 	app.ui.updateTimer = setInterval(app.ui.displayDeviceList, 500);
 };
 
@@ -171,11 +174,14 @@ app.ui.onStopScanButton = function()
 // Called when a device is found.
 app.ui.deviceFound = function(device) //, errorCode)
 {
-	// Set timestamp for device (this is used to remove
-	// inactive devices).
-	var advertisedServiceUUIDs = device.advertisementData.kCBAdvDataServiceUUIDs
-	if (advertisedServiceUUIDs.indexOf(app.radioService) > -1)
+	//console.log("device: " + JSON.stringify(device));
+	//console.log("device.advertisementData" + device.advertisementData);
+	//console.log("device.advertisementData connectable" + device.advertisementData.kCBAdvDataIsConnectable);
+	//console.log("device.advertisementData.kCBAdvDataServiceUUIDs" + device.advertisementData.kCBAdvDataServiceUUIDs);
+	var advertisedServiceUUIDs = device.advertisementData.kCBAdvDataServiceUUIDs;
+	if (advertisedServiceUUIDs && advertisedServiceUUIDs.indexOf(app.radioService) > -1)
     	{
+		// Set timestamp for device (this is used to remove inactive devices).
 		device.timeStamp = Date.now();
 		console.log('Found device:' + JSON.stringify(device));
 		// Insert the device into table of found devices.
@@ -222,9 +228,9 @@ app.ui.displayDeviceList = function()
 	$('#found-devices').empty();
 
 	var timeNow = Date.now();
-
 	$.each(app.devices, function(key, device)
 	{
+		console.log("in loop");
 		// Only show devices that are updated during the last 10 seconds.
 		if (device.timeStamp + 10000 > timeNow)
 		{
@@ -488,13 +494,10 @@ app.ui.displayBatteryLevel = function(batteryLevel)
 	console.log('battery level: ' + rawBatteryLevel);
 
 	levelBar = $('.level');
-	var isCharging = rawBatteryLevel > 100;
 	levelBar.removeClass('high');
 	levelBar.removeClass('med');
 	levelBar.removeClass('low');
-	if (isCharging) {
-	  levelBar.addClass('charging');
-	} else if (rawBatteryLevel > 60) {
+	if (rawBatteryLevel > 60) {
 	  levelBar.addClass('high');
 	} else if (rawBatteryLevel >= 30 ) {
 	  levelBar.addClass('med');
@@ -506,6 +509,43 @@ app.ui.displayBatteryLevel = function(batteryLevel)
 	} else {
 		levelBar.css('width', rawBatteryLevel + '%');
 	}
+};
+
+
+app.getIsCharging = function(callback)
+{
+	console.log('getIsCharging');
+	var service = evothings.ble.getService(app.connectedDevice, app.miscService);
+	var characteristic = evothings.ble.getCharacteristic(service, app.miscBatteryCharacteristic);
+	evothings.ble.readCharacteristic(
+        	app.connectedDevice,
+        	characteristic,
+        	function(data) {
+			callback(data);
+		},
+		function(error) {
+			console.log('getIsCharging error: ' + error);
+			app.batteryErrorBar.show({
+				html: 'Error getting if charging'
+			});
+		}
+	);
+};
+
+
+app.ui.displayIsCharging = function(isCharging)
+{
+	console.log("displayBatteryCharging");
+	var dv = new DataView(isCharging, 0);
+	var rawIsCharging = dv.getUint8(0);
+	console.log('IsCharging: ' + rawIsCharging);
+
+	levelBar = $('.level');
+	if (rawIsCharging > 0) {
+	  levelBar.addClass('charging');
+        } else {
+          levelBar.removeClass('charging');
+        }
 };
 
 
@@ -926,6 +966,7 @@ app.ui.onRenewIPEthernet = function(event)
 
 app.readBasicSettings = function() {
 	app.getBatteryLevel(app.ui.displayBatteryLevel);
+	app.getIsCharging(app.ui.displayIsCharging);
 	app.getDataRate(app.ui.displayDataRate);
 	app.getChannel(app.ui.displayChannel);
 	app.getAcknowledgementRequested(app.ui.displayAcknowledgementRequested);
@@ -1388,9 +1429,93 @@ app.ui.displayTestPunches = function(testPunches) {
 		console.log('displayTestPunches: ' + rawTestPunches);
 		var punchesObj = JSON.parse(rawTestPunches);
 
-		if (false) { //punchesObj.punches.length == 0
-			// no punches, must mean we received all
-			console.log("no punches, must mean we received all");
+		var table = $("#wiroc-test-punches-table tbody");
+		for (var i = 0; i < punchesObj.punches.length; i++) {
+			var punch = punchesObj.punches[i];
+			var trs = table.find('tr[data-id="' + punch.Id + '"]');
+			var ackReq = $('#acknowledgement').prop("checked");
+			var noOfSendTriesColor = "";
+			if (punch.NoOfSendTries == 1 && ((punch.Status == 'Acked' && ackReq) || (punch.Status == 'Not acked' && !ackReq))) {
+				// Success
+				noOfSendTriesColor = ' style="background-color:#2ECC71"';
+			} else if (punch.NoOfSendTries > 1) {
+				noOfSendTriesColor = ' style="background-color:#E74C3C"';
+			}
+			var statusColor = "";
+			if ((punch.Status == 'Acked' && ackReq) || (punch.Status == 'Not acked' && !ackReq)) {
+				// Success
+				statusColor = ' style="background-color:#2ECC71"';
+			} else if (punch.NoOfSendTries > 1 && (punch.Status == 'Not sent' || punch.Status == 'Not acked')) {
+				statusColor = ' style="background-color:#E74C3C"';
+			}
+			var rowText = '<tr data-id="' + punch.Id + '" data-subscrId="' + punch.SubscrId + '"><td>' + punch.SINo + '</td><td>' + punch.Time + '</td><td' + noOfSendTriesColor +'>' + punch.NoOfSendTries + '</td><td'+ statusColor + '>' + punch.Status + '</td></tr>';
+			var rowElement = $(rowText);
+			if (trs.length > 0) {
+				trs[0].replaceWith(rowElement[0]);
+				console.log("replace");
+			} else {
+				table.append(rowElement);
+				console.log("append");
+			}
+		}
+
+		// calculate percentages
+		var allTrs = table.find('tr');
+		var triesPercentage = "Unknown";
+		var statusPercentage = "Unknown"
+		if (ackReq) {
+			var sumNoOfFailedTries = 0;
+			var sumNoOfSuccessTries = 0;
+			var sumNoOfTries = 0;
+			for (var j = 0; j < allTrs.length; j++) {
+				var noOfSendTries = $(allTrs[j]).find('td').eq(2).html();
+				var status = $(allTrs[j]).find('td').eq(3).html();
+				console.log("noOfSendTries: " + noOfSendTries);
+				console.log("status: " + status);
+				if (status == 'Not sent' || status == 'Not acked') {
+					sumNoOfTries += parseInt(noOfSendTries);
+					sumNoOfFailedTries += parseInt(noOfSendTries);
+				} else if (status == 'Acked') {
+					sumNoOfTries += parseInt(noOfSendTries);
+					sumNoOfFailedTries += parseInt(noOfSendTries) - 1;
+					sumNoOfSuccessTries += 1;
+				}
+			}
+		
+			triesPercentage = 0;
+			if (sumNoOfTries > 0) { triesPercentage = Math.round(sumNoOfSuccessTries*100 / sumNoOfTries); }
+			statusPercentage = 0;
+			if (allTrs.length > 0) { statusPercentage = Math.round(sumNoOfSuccessTries*100 / allTrs.length); }
+			
+		}
+		var tfoot = $("#wiroc-test-punches-table tfoot");
+		var summaryTrs = tfoot.find('tr[data-id="summary"]');
+		var sumRowElement = $('<tr data-id="summary"><td colspan="2">Success %</td><td>' + triesPercentage + '%</td><td>' + statusPercentage + '%</td></tr>');
+		if (summaryTrs.length > 0) {
+			summaryTrs[0].replaceWith(sumRowElement[0]);
+		}
+	
+
+		var noOfCompletedRows = 0;
+		for (var j = 0; j < allTrs.length; j++) {
+			var noOfSendTries = $(allTrs[j]).find('td').eq(2).html();
+			var status = $(allTrs[j]).find('td').eq(3).html();
+			console.log("noOfSendTries: " + noOfSendTries);
+			console.log("status: " + status);
+			if ((status == 'Acked' && ackReq) || (status =='Not acked' && !ackReq) || 
+				(parseInt(noOfSendTries) > 1 && (status == 'Not sent' || status == 'Not acked'))) {
+				noOfCompletedRows++;
+			}
+		}
+
+		// Check if we received all
+		console.log("No of rows: " + allTrs.length);
+		console.log("No of punches to send: " + app.ui.misc.noOfTestPunchesToSend);
+		console.log("No of completed rows: " + noOfCompletedRows);
+		if (allTrs.length == app.ui.misc.noOfTestPunchesToSend 
+			&& app.ui.misc.noOfTestPunchesToSend == noOfCompletedRows)
+		{
+			console.log("we received all");
 			var service = evothings.ble.getService(app.connectedDevice, app.miscService);
 			var characteristic = evothings.ble.getCharacteristic(service, app.miscTestPunchesCharacteristic);
 			evothings.ble.disableNotification(
@@ -1398,8 +1523,8 @@ app.ui.displayTestPunches = function(testPunches) {
 				characteristic,
 				function(data) {
 					console.log('unsubscribe test punches');
-					//$('#btnSubscribePunches').text("Subscribe");
-					//$('#btnSubscribePunches').data("subscribe", true);
+					$('#stopTestPunch').addClass('ui-disabled');
+					$('#testPunchLoading').hide();
 				},
 				function(error) {
 					console.log('unsubscribe test punches error');
@@ -1408,72 +1533,6 @@ app.ui.displayTestPunches = function(testPunches) {
 					});
 				}
 			);
-		} else {
-			var table = $("#wiroc-test-punches-table tbody");
-			for (var i = 0; i < punchesObj.punches.length; i++) {
-				var punch = punchesObj.punches[i];
-				var trs = table.find('tr[data-id="' + punch.Id + '"]');
-				var ackReq = $('#testPunchAck').prop("checked")
-				var noOfSendTriesColor = "";
-				if (punch.NoOfSendTries == 1 && ((punch.Status == 'Acked' && ackReq) || (punch.Status == 'Not acked' && !ackReq))) {
-					// Success
-					noOfSendTriesColor = ' style="background-color:#2ECC71"';
-				} else if (punch.NoOfSendTries > 1) {
-					noOfSendTriesColor = ' style="background-color:#E74C3C"';
-				}
-				var statusColor = "";
-				if ((punch.Status == 'Acked' && ackReq) || (punch.Status == 'Not acked' && !ackReq)) {
-					// Success
-					statusColor = ' style="background-color:##2ECC71"';
-				} else if (punch.NoOfSendTries > 1 && (punch.Status == 'Not sent' || punch.Status == 'Not acked')) {
-					statusColor = ' style="background-color:#E74C3C"';
-				}
-				var rowText = '<tr data-id="' + punch.Id + '" data-subscrId="' + punch.SubscrId + '"><td>' + punch.SINo + '</td><td>' + punch.Time + '</td><td' + noOfSendTriesColor +'>' + punch.NoOfSendTries + '</td><td'+ statusColor + '>' + punch.Status + '</td></tr>';
-				var rowElement = $(rowText);
-				if (trs.length > 0) {
-					trs[0].replaceWith(rowElement[0]);
-					console.log("replace");
-				} else {
-					table.append(rowElement);
-					console.log("append");
-				}
-
-	
-				// calculate percentages
-				var triesPercentage = "Unknown";
-				var statusPercentage = "Unknown"
-				if (ackReq) {
-					var sumNoOfFailedTries = 0;
-					var sumNoOfSuccessTries = 0;
-					var sumNoOfTries = 0;
-					var allTrs = table.find('tr');
-					for (var j = 0; j < allTrs.length; j++) {
-						var noOfSendTries = $(allTrs[j]).find('td').eq(2).html();
-						var status = $(allTrs[j]).find('td').eq(3).html();
-						console.log("noOfSendTries: " + noOfSendTries);
-						console.log("status: " + status);
-						if (status == 'Not sent' || status == 'Not acked') {
-							sumNoOfTries += parseInt(noOfSendTries);
-							sumNoOfFailedTries += parseInt(noOfSendTries);
-						} else if (status == 'Acked') {
-							sumNoOfTries += parseInt(noOfSendTries);
-							sumNoOfFailedTries += parseInt(noOfSendTries) - 1;
-							sumNoOfSuccessTries += 1;
-						}
-					}
-				
-					triesPercentage = 0;
-					if (sumNoOfTries > 0) { Math.round(sumNoOfSuccessTries*100 / sumNoOfTries); }
-					statusPercentage = 0;
-					if (allTrs.length > 0) { Math.round(sumNoOfSuccessTries*100 / allTrs.length); }
-					var tfoot = $("#wiroc-test-punches-table tfoot");
-					var summaryTrs = tfoot.find('tr[data-id="summary"]');
-				}
-				var sumRowElement = $('<tr data-id="summary"><td colspan="2">Success %</td><td>' + triesPercentage + '%</td><td>' + statusPercentage + '%</td></tr>');
-				if (summaryTrs.length > 0) {
-					summaryTrs[0].replaceWith(sumRowElement[0]);
-				}				
-			}
 		}
 	}
 	console.log("displaytestPunches end");
@@ -1504,15 +1563,16 @@ app.ui.onSendTestPunchesButton = function(event) {
 	console.log('onSendTestPunchesButton');
 	app.testPunches = null;
 
+	$("#wiroc-test-punches-table tbody").html('');
 	$('#stopTestPunch').removeClass('ui-disabled');
 	$('#testPunchLoading').show();
 
 
-	var noOfTestPunchesToSend = $("#noOfTestPunches option:selected").val();
+	app.ui.misc.noOfTestPunchesToSend = $("#noOfTestPunches option:selected").val();
 	var siNumber = $("#siNumber").val();
 	var sendInterval = $("#sendInterval").val();
-	var ackReq = $('#testPunchAck').prop("checked") ? 1 : 0;
-	var param = noOfTestPunchesToSend + ';' + sendInterval + ';' + siNumber + ';' + ackReq;
+	var ackReq = $('#acknowledgement').prop("checked") ? 1 : 0;
+	var param = app.ui.misc.noOfTestPunchesToSend + ';' + sendInterval + ';' + siNumber + ';' + ackReq;
 
 	var te = new TextEncoder("utf-8").encode(param);
 	var parameters = new Uint8Array(te);
