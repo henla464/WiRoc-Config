@@ -156,7 +156,7 @@ app.ui.onStartScanButton = function()
 	evothings.ble.startScan(
     		app.ui.deviceFound,
 		app.ui.scanError,
-		{ serviceUUIDs: [app.radioService, app.radioService2] });
+		{  });
 	app.ui.updateTimer = setInterval(app.ui.displayDeviceList, 500);
 };
 
