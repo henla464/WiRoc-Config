@@ -43,7 +43,7 @@
     		padding-bottom:0.5em;
     	}
     	
-    	label.default-channel {
+    	label.channel-header {
 		line-height: 16vw;
     		font-size: 10vw;
     		text-align: center;
@@ -51,14 +51,7 @@
 		height: 16vw;
     		/*transition: font-size 1s;*/
     	}
-	label.custom-channel {
-		line-height: 16vw;
-    		font-size: 7vw;
-    		text-align: center;
-    		margin-bottom: -1vw;
-		height: 16vw;
-    		/*transition: font-size 1s;*/
-    	}
+	
     	.ui-select {
     		margin-top: 0px;
     	}
@@ -72,10 +65,18 @@
     	 {
 			margin-left:auto;
 			margin-right:auto;
-		 }
+	}
+		
+		img.header-logo {
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
+			height: 12vw;
+		}
+
 		
 		
-    	.ui-mobile [data-role=page] {
+    		.ui-mobile [data-role=page] {
 			position: inherit;
 		}
 		
@@ -107,10 +108,9 @@
 		 	margin: 0;
 		}
 
+		.datarate div.ui-controlgroup-controls label{
 
-
-		.datarate-disabled div.ui-controlgroup-label{
-			opacity:0.4;
+			text-align:center;
 		}
 
 		
@@ -344,6 +344,26 @@
 	<script src="libs/evothings/ui/ui.js"></script>
 	<script src="app.js"></script>
 	<script>
+		function adjustHeight() {
+			var viewPortHeight = $(window).height();
+			// only one header will have a height
+			//var headerHeight = $('#page-device-scan div[data-role="header"]').height() + 
+			//	$('#page-basic-config  div[data-role="header"]').height() +
+			//	$('#page-advanced-config div[data-role="header"]').height();
+			//console.log("header: " + headerHeight);
+			var contentHeight = viewPortHeight - 52;
+			var contentHeight2 = viewPortHeight - 56;
+        		var deviceNameHeight = 20;
+			var tabHeaderHeight = 40;
+			$('#page-device-scan div[role="main"]').css({'min-height': contentHeight + 'px'});
+			$('#page-basic-config div[role="main"]').css({'min-height': contentHeight + 'px'});
+			$('#page-advanced-config div[role="main"]').css({'min-height': contentHeight + 'px'});
+			$('#tabs-main').css({'min-height': (contentHeight2 - deviceNameHeight) + 'px'});
+			$('#tabs-adv').css({'min-height': contentHeight2 + 'px'});
+
+			$('#radio').css({'min-height': (contentHeight2 - deviceNameHeight -tabHeaderHeight) + 'px'});
+                }
+
 		$(document).ready(function() {
 			app.networkInfoBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#80d4ff' });
 
@@ -355,6 +375,7 @@
 			app.miscDatabaseSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database'), autohide: true, backgroundColor: '#99ff99' });
 			app.miscDatabaseAdvSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database-adv'), autohide: true, backgroundColor: '#99ff99' });
 			app.miscTestPunchesSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-test'), autohide: true, backgroundColor: '#99ff99' });
+			app.miscRadioAdvSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio-adv'), autohide: true, backgroundColor: '#99ff99' });
 
 			app.searchDevicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-search-devices'), autohide: true, backgroundColor: '#ffbf00' });
 			app.batteryErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#ffbf00' });
@@ -368,18 +389,10 @@
 			app.miscDatabaseErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database'), autohide: true, backgroundColor: '#ffbf00' });
 			app.miscDatabaseAdvErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database-adv'), autohide: true, backgroundColor: '#ffbf00' });
 			app.miscTestPunchesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-test'), autohide: true, backgroundColor: '#ffbf00' });
+			app.miscRadioAdvErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio-adv'), autohide: true, backgroundColor: '#ffbf00' });
 			
 			$('#wifiConnect').click(app.ui.onWifiPasswordConnectButton);
 			$('#saveSettingButton').click(app.ui.onEditSettingSaveButton);
-
-			$("input[name='radio-choice-channel-type']").on( "change", function(event, ui) {
-				if (this.value == 'custom') {
-					app.ui.onShowCustomChannelPage();
-				} else {
-					console.log(" change event ");
-					app.ui.onShowPredefinedChannelPage();
-				}
-			});
 
 			$(":mobile-pagecontainer").on( "pagecontainerbeforechange", function( event, ui ) {
 				if (typeof ui.toPage == "object") {
@@ -409,7 +422,7 @@
 							setTimeout(function(){ $('#tab-' + app.basicConfigTab).trigger('click'); }, 500);
 						}
 					}
-					
+					adjustHeight();
 				}
 			} );
 			
@@ -418,19 +431,20 @@
 			$("#channel-select").on( "change", function(event, ui) {
 				app.ui.updateBackgroundColor();
 			});
-			$("#acknowledgement").on( "change", function(event, ui) {
-				app.ui.updateBackgroundColor();
-			});
+
 			$('input[type=radio][name=radio-choice-data-rate]').on("change", function(event, ui) {
 				app.ui.updateBackgroundColor();
 			});
-			$("#sendtomeosenabled").on( "change", function(event, ui) {
+			$("#sendtomeosenabled").on("change", function(event, ui) {
 				app.ui.updateBackgroundColor();
 			});
-			$("#sendtomeosip").on( "input propertychange paste", function(event, ui) {
+			$("#sendtomeosip").on("input propertychange paste", function(event, ui) {
 				app.ui.updateBackgroundColor();
 			});
 			$('#sendtomeosipport').on("input propertychange paste", function(event, ui) {
+				app.ui.updateBackgroundColor();
+			});
+			$("#acknowledgement").on( "change", function(event, ui) {
 				app.ui.updateBackgroundColor();
 			});
 
@@ -473,21 +487,36 @@
 				app.advancedConfigTab = ui.newTab.data("tabname");
 			} );
 
+			 //$(window).bind('resize', function (event) {
+			//	var content_height = $.mobile.activePage.children('[data-role="content"]').height(),
+			//	    header_height  = $.mobile.activePage.children('[data-role="header"]').height(),
+			//	    footer_height  = $.mobile.activePage.children('[data-role="footer"]').height(),
+			//	    window_height  = $(this).height();
+			//	    console.log("window: " + window_height + " headerheight: " + header_height + " footerHeight: " + footer_height + " content: " + content_height);
 
+				//if (content_height < (window_height - header_height - footer_height)) {
+				//    $.mobile.activePage.css('min-height', (content_height + header_height + footer_height));
+				//    setTimeout(function () {
+				//	$.mobile.activePage.children('[data-role="footer"]').css('top', 0);
+				//    }, 500);
+				//}
+			//	event.stopImmediatePropagation();
+			//    }).trigger('resize');
+			//All pages at least 100% of viewport height
+			
 		});
 	</script>
 </head>
 <body ontouchstart=""><!-- ontouchstart="" enables low-delay CSS transitions. -->
 	<div id="page-device-scan" data-role="page">
-		<div data-role="header">
-			<h1 style="font-size:3vw" id="ScanHeader">WiRoc<br/>Config</h1>
+		<div data-role="header" data-position="fixed">
+			<img class="header-logo" src="res/logo.png"/>
 		</div>
-		<div id="notification-search-devices" style="height:1px"></div>
-
- 		<div role="main" class="ui-content" class="page">
-			<!--<a href="#page-basic-config" data-transition="slide">Slide</a>-->
-			<a href="#" onclick="app.ui.onStartScanButton()" class="ui-btn ui-btn-inline ui-corner-all start-button">START SCAN</a>
-			<a href="#" onclick="app.ui.onStopScanButton()" class="ui-btn ui-btn-inline ui-corner-all stop-button">STOP SCAN</a>
+		
+ 		<div role="main" class="ui-content" class="page" style="padding:0">
+			<div id="notification-search-devices" style="height:0px"></div>
+			<a href="#page-basic-config" data-transition="slide">Slide</a>
+			<a href="#" onclick="app.ui.onScanButton()" class="ui-btn ui-btn-inline ui-corner-all scan-button">Start scan</a>
 	
 			<p id="scan-status" class="scan-status">Scanning Paused</p>
 	
@@ -498,9 +527,9 @@
 
 	
 	<div id="page-basic-config" data-role="page">
-		<div data-role="header">
+		<div data-role="header" data-position="fixed">
 			<a href="#page-device-scan" id="menu-left" class="ui-btn ui-corner-all ui-btn-inline ui-mini ui-btn-icon-left ui-icon-carat-l" data-rel="back" data-transition="slide">Back</a>			
-			<h1 style="font-size:3vw">WiRoc<br/>Config</h1>
+			<img class="header-logo" src="res/logo.png"/>
 			<div id="battery-indicator">
 				<div id="battery" class="battery">
 					<div class="level charging"></div>
@@ -527,15 +556,14 @@
 				<h1>WiRoc Config</h1>
 
 				<table>
-					<tr><td>Version</td><td>0.1.4</td></tr>
+					<tr><td>Version</td><td>0.1.6</td></tr>
 					<tr><td></td><td></td></tr>
 					<tr><td></td><td></td></tr>
 					<tr><td></td><td></td></tr>
 				</table>
 			</span>
 		</div>
-		<div data-role="main" class="ui-content" class="page" style="padding:0">
-		<form>
+		<div role="main" class="ui-content" class="page" style="padding:0">
 			<h1 id="device-name" style="font-size:5vw;text-align: center;margin:0">WiRoc</h1>
 			<div data-role="tabs" id="tabs-main">
 			 	<div data-role="navbar">
@@ -549,13 +577,8 @@
 				</div>
 				<div id="radio" class="ui-body-d ui-content" style="padding:2vw">
 					<div id="notification-radio" style="height:1px"></div>
-					<div>
-						<fieldset data-role="controlgroup" data-type="horizontal">
-							<input type="radio" name="radio-choice-channel-type" id="radio-choice-channel-type-default" value="default" checked="checked"><label for="radio-choice-channel-type-default">Predefined channel</label>
-							<input type="radio" name="radio-choice-channel-type" id="radio-choice-channel-type-custom" value="custom"><label for="radio-choice-channel-type-custom">Custom channel</label>
-						</fieldset>
-					</div>
-					<label id="channel-header" class="default-channel">Channel</label>
+				
+					<label id="channel-header" class="channel-header">Channel</label>
 					<div class="ui-field-contain channel">
 						<select name="channel" id="channel-select" data-native-menu="false">
 							<option value="1">1</option>
@@ -566,27 +589,26 @@
 							<option value="6">6</option>
 							<option value="7">7</option>
 							<option value="8">8</option>
-							<option value="9">9</option>
 						</select>
 					</div>
 				     
-					<div id="acknowledge-div">
-		 				<label><input type="checkbox" id="acknowledgement">Request acknowledgement</label>
-					</div>
 					<div>
-						<fieldset data-role="controlgroup" data-type="horizontal" class="datarate datarate-disabled">
-							<legend>Data rate</legend>
-							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-1" value="146" disabled="disabled"><label for="radio-choice-data-rate-1">146 bps</label>
-							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-2" value="293" disabled="disabled"><label for="radio-choice-data-rate-2">293 bps</label>
-							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-3" value="586" disabled="disabled" checked="checked"><label for="radio-choice-data-rate-3">586 bps</label>
-							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-4" value="2148" disabled="disabled"><label for="radio-choice-data-rate-4">2148 bps</label>
-							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-5" value="7032" disabled="disabled"><label for="radio-choice-data-rate-5">7032 bps</label>
+						<fieldset data-role="controlgroup" data-type="horizontal" class="datarate">
+							<legend>Range<br/>Data rate</legend>
+							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-1" value="293" checked="checked">
+								<label for="radio-choice-data-rate-1">Long<br/>293 bps</label>
+							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-2" value="537">
+								<label for="radio-choice-data-rate-2">Med-Long<br/>537 bps</label>
+							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-3" value="977">
+								<label for="radio-choice-data-rate-3">Med-Short<br/>977 bps</label>
+							<input type="radio" name="radio-choice-data-rate" id="radio-choice-data-rate-4" value="1758">
+								<label for="radio-choice-data-rate-4">Short<br/>1758 bps</label>
 						</fieldset>
 					</div>
 					<div style="text-align:center">
 						<div style="display:inline-block">
-							<a href="#" onclick="app.ui.onReadBasicButton()" class="ui-btn ui-btn-inline ui-corner-all read-basic-button">READ</a>
-							<a href="#" onclick="app.ui.onApplyBasicButton()" class="ui-btn ui-btn-inline ui-corner-all apply-basic-button">APPLY SETTINGS</a>
+							<a href="#" onclick="app.ui.onReadBasicButton()" class="ui-btn ui-btn-inline ui-corner-all read-basic-button">Read</a>
+							<a href="#" onclick="app.ui.onApplyBasicButton()" class="ui-btn ui-btn-inline ui-corner-all apply-basic-button">Save</a>
 						</div>
 					</div>
 				</div>			
@@ -607,8 +629,8 @@
 
 					<div style="text-align:center">
 						<div style="display:inline-block">
-							<a href="#" onclick="app.ui.onReadMeosButton()" class="ui-btn ui-btn-inline ui-corner-all read-basic-button">READ</a>
-							<a href="#" onclick="app.ui.onApplyMeosButton()" class="ui-btn ui-btn-inline ui-corner-all apply-basic-button">APPLY SETTINGS</a>
+							<a href="#" onclick="app.ui.onReadMeosButton()" class="ui-btn ui-btn-inline ui-corner-all read-basic-button">Read</a>
+							<a href="#" onclick="app.ui.onApplyMeosButton()" class="ui-btn ui-btn-inline ui-corner-all apply-basic-button">Save</a>
 						</div>
 					</div>
 				</div>
@@ -705,14 +727,12 @@
 					</div>
 
 					<div data-role="popup" id="popupWifiLogin" data-theme="a" class="ui-corner-all">
-						<form>
 						<div style="padding:10px 20px;">
 							<h3>Enter password</h3>
 							<label for="wifiPassword" class="ui-hidden-accessible">Password:</label>
 							<input type="password" name="wifiPassword" id="wifiPassword" value="" placeholder="password" data-theme="a">
 							<button id="wifiConnect" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">Connect</button>
 						</div>
-						</form>
 					</div>
 				</div>
 				<div id="database" class="ui-body-d ui-content" style="padding:2vw">
@@ -725,7 +745,6 @@
 				</div>
 
 			</div>
-		</form>
 		</div>
 	</div>
 
@@ -733,12 +752,26 @@
 
 
 
-
-
 	<div id="page-advanced-config" data-role="page">
-		<div data-role="header">
+		<div data-role="popup" id="popup-about-2" data-dismissible="true">
+			<a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
+			<div data-role="header" data-theme="a">
+				<h1>About</h1>
+			</div>
+			<span>
+				<h1>WiRoc Config</h1>
+
+				<table>
+					<tr><td>Version</td><td>0.1.6</td></tr>
+					<tr><td></td><td></td></tr>
+					<tr><td></td><td></td></tr>
+					<tr><td></td><td></td></tr>
+				</table>
+			</span>
+		</div>
+		<div data-role="header" data-position="fixed">
 			<a href="#page-device-scan" id="menu-left" class="ui-btn ui-corner-all ui-btn-inline ui-mini ui-btn-icon-left ui-icon-carat-l" data-rel="back" data-transition="slide">Back</a>			
-			<h1 style="font-size:3vw">WiRoc<br/>Config</h1>
+			<img class="header-logo" src="res/logo.png"/>
 			<div id="battery-indicator">
 				<div id="battery" class="battery">
 					<div class="level"></div>
@@ -755,24 +788,8 @@
 			</ul>      
 		</div>
 
-		<div data-role="popup" id="popup-about-2" data-dismissible="true">
-			<a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
-			<div data-role="header" data-theme="a">
-				<h1>About</h1>
-			</div>
-			<span>
-				<h1>WiRoc Config</h1>
-
-				<table>
-					<tr><td>Version</td><td>0.1.1</td></tr>
-					<tr><td></td><td></td></tr>
-					<tr><td></td><td></td></tr>
-					<tr><td></td><td></td></tr>
-				</table>
-			</span>
-		</div>
-		<div data-role="main" class="ui-content" class="page" style="padding:0">
-		<form>
+		
+		<div role="main" class="ui-content" class="page" style="padding:0">
 			<h1 id="device-name" style="font-size:5vw;text-align: center;margin:0"></h1>
 			<div data-role="tabs" id="tabs-adv">
 			 	<div data-role="navbar">
@@ -783,6 +800,7 @@
 					<li data-tabname="settings"><a href="#settings" data-ajax="false" id="tab-settings">Settings</a></li>
 					<li data-tabname="punches"><a href="#punches" data-ajax="false" id="tab-punches">Punches</a></li>
 					<li data-tabname="database-adv"><a href="#database-adv" data-ajax="false" id="tab-database-adv">Database</a></li>
+					<li data-tabname="radio-adv"><a href="#radio-adv" data-ajax="false" id="tab-radio-adv">Radio adv.</a></li>
 					</ul>
 				</div>
 				<div id="devicename" class="ui-body-d ui-content" style="padding:2vw">
@@ -793,8 +811,8 @@
 					</div>
 					<div style="text-align:left">
 						<div style="display:inline-block">
-							<a href="#" onclick="app.ui.onReadDeviceNameButton()" class="ui-btn ui-btn-inline ui-corner-all">READ</a>
-							<a href="#" onclick="app.ui.onApplyDeviceNameButton()" class="ui-btn ui-btn-inline ui-corner-all">APPLY SETTINGS</a>
+							<a href="#" onclick="app.ui.onReadDeviceNameButton()" class="ui-btn ui-btn-inline ui-corner-all">Read</a>
+							<a href="#" onclick="app.ui.onApplyDeviceNameButton()" class="ui-btn ui-btn-inline ui-corner-all">Save</a>
 						</div>
 					</div>
 				</div>
@@ -825,7 +843,6 @@
 					</div>
 					<div id="wiroc-settings-content"></div>
 					<div data-role="popup" id="popupAddEditSetting" data-theme="a" class="ui-corner-all">
-						<form>
 						<div style="padding:10px 20px;">
 							<h3>Setting</h3>
 							<label for="settingKey" class="ui-hidden-accessible">Key:</label>
@@ -834,7 +851,6 @@
 							<input type="text" name="settingValue" id="settingValue" value="" placeholder="Value" data-theme="a">
 							<button id="saveSettingButton" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check">Save setting</button>
 						</div>
-						</form>
 					</div>
 				</div>
 				<div id="punches" class="ui-body-d ui-content" style="padding:2vw">
@@ -859,11 +875,22 @@
 						</div>
 					</div>
 				</div>
+				<div id="radio-adv" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-radio-adv" style="height:1px"></div>
+					<div id="acknowledge-div">
+		 				<label><input type="checkbox" id="acknowledgement">Request acknowledgement</label>
+					</div>
+					<div style="text-align:center">
+						<div style="display:inline-block">
+							<a href="#" onclick="app.ui.onReadRadioAdvButton()" class="ui-btn ui-btn-inline ui-corner-all read-basic-button">Read</a>
+							<a href="#" onclick="app.ui.onApplyRadioAdvButton()" class="ui-btn ui-btn-inline ui-corner-all apply-basic-button">Save</a>
+						</div>
+					</div>
+				</div>
 
 			</div>
-		</form>
 		</div>
 	</div>
-</body>
 
+</body>
 </html>

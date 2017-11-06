@@ -8,6 +8,7 @@ app.advancedConfigTab = null;
 
 // Device list.
 app.devices = {};
+app.connectErrorCount = 0;
 app.connectedDevice = null;
 app.searchDevicesErrorBar = null;
 app.batteryErrorBar = null;
@@ -27,6 +28,8 @@ app.miscDatabaseErrorBar = null;
 app.miscDatabaseSuccessBar = null;
 app.miscDatabaseAdvErrorBar = null;
 app.miscDatabaseAdvSuccessBar = null;
+app.miscRadioAdvErrorBar = null;
+app.miscRadioAdvSuccessBar = null;
 app.miscTestPunchesSuccessBar = null;
 app.miscTestPunchesErrorBar = null;
 app.miscBatteryCharacteristic = null;
@@ -91,67 +94,23 @@ app.onDeviceReady = function()
 {
 	console.log('device ready');
 	$(":mobile-pagecontainer").pagecontainer( "change", "#page-device-scan", { } );
-	app.ui.showPredefinedChannelPage();
+	//app.ui.showChannelPage();
 };
 
-app.ui.showPredefinedChannelPage = function()
-{
-	$("#radio-choice-channel-type-custom").prop("checked",false).checkboxradio("refresh");
-	$("#radio-choice-channel-type-default").prop("checked",true).checkboxradio("refresh");
-
-	$('#channel-header').removeClass('custom-channel');
-	$('#channel-header').addClass('default-channel');
-	$('#channel-header').text('Channel');
-	$("#radio-choice-data-rate-1").prop("checked",false).checkboxradio("refresh");
-	$("#radio-choice-data-rate-2").prop("checked",false).checkboxradio("refresh");
-	$("#radio-choice-data-rate-4").prop("checked",false).checkboxradio("refresh");
-	$("#radio-choice-data-rate-5").prop("checked",false).checkboxradio("refresh");
-	$("#radio-choice-data-rate-3").prop("checked",true).checkboxradio("refresh");
-
-	$("#radio-choice-data-rate-1").checkboxradio("disable");
-	$("#radio-choice-data-rate-2").checkboxradio("disable");
-	$("#radio-choice-data-rate-4").checkboxradio("disable");
-	$("#radio-choice-data-rate-5").checkboxradio("disable");
-	$("#radio-choice-data-rate-3").checkboxradio("disable");
-	$('.datarate').addClass('datarate-disabled');
-};
-
-app.ui.onShowPredefinedChannelPage = function()
-{
-	$('#channel-header').animate({'opacity': 0, 'font-size': '3vw'}, 600, function () {
-		app.ui.showPredefinedChannelPage();
-	}).animate({'opacity': 1,'font-size': '10vw'}, 500);
-};
-
-app.ui.showCustomChannelPage = function()
-{
-	$("#radio-choice-channel-type-default").prop("checked",false).checkboxradio("refresh");
-	$("#radio-choice-channel-type-custom").prop("checked",true).checkboxradio("refresh");
-
-	$('#channel-header').removeClass('default-channel');
-	$('#channel-header').addClass('custom-channel');
-	$('#channel-header').text('Frequency channel');
-   	$("#radio-choice-data-rate-1").checkboxradio("enable");
-	$("#radio-choice-data-rate-2").checkboxradio("enable");
-	$("#radio-choice-data-rate-4").checkboxradio("enable");
-	$("#radio-choice-data-rate-5").checkboxradio("enable");
-	$("#radio-choice-data-rate-3").checkboxradio("enable");
-
-	$('.datarate').removeClass('datarate-disabled');
-};
-
-app.ui.onShowCustomChannelPage = function()
-{
-	$('#channel-header').animate({'opacity': 0, 'font-size': '3vw'}, 600, function () {
-		app.ui.showCustomChannelPage();
-	}).animate({'opacity': 1, 'font-size': '7vw'}, 500);
-};
-
+app.ui.onScanButton = function() {
+	if (true) {
+		app.ui.onStartScanButton();
+	} else {
+		app.ui.onStopScanButton();
+	}
+}
 
 // Called when Start Scan button is selected.
 app.ui.onStartScanButton = function()
 {
 	app.disconnect();
+	app.devices = {};
+	app.ui.displayDeviceList();
 	app.ui.displayStatus('Scanning...');
 	evothings.ble.startScan(
     		app.ui.deviceFound,
@@ -165,9 +124,9 @@ app.ui.onStopScanButton = function()
 {
 	//app.stopScan();
         evothings.ble.stopScan()
-	app.devices = {};
-	app.ui.displayStatus('Scan Paused');
-	app.ui.displayDeviceList();
+	//app.devices = {};
+	app.ui.displayStatus('Scan stopped');
+	//app.ui.displayDeviceList();
 	clearInterval(app.ui.updateTimer);
 };
 
@@ -183,7 +142,7 @@ app.ui.deviceFound = function(device) //, errorCode)
     	{
 		// Set timestamp for device (this is used to remove inactive devices).
 		device.timeStamp = Date.now();
-		console.log('Found device:' + JSON.stringify(device));
+		console.log('Found device: ' + device.name);
 		// Insert the device into table of found devices.
 		app.devices[device.address] = device;
     	}
@@ -197,7 +156,7 @@ app.ui.scanError = function(errorCode)
 app.ui.updateBackgroundColor = function()
 {
 	// radio
-	if (app.ui.radio.channel != app.ui.getChannel() || app.ui.radio.dataRate != app.ui.getDataRate() || app.ui.radio.acknowledgementRequested != app.ui.getAcknowledgementRequested())
+	if (app.ui.radio.channel != app.ui.getChannel() || app.ui.radio.dataRate != app.ui.getDataRate())
 	{
 		$('#radio').css('background-color','#FFEFD5');
 	} else {
@@ -211,13 +170,18 @@ app.ui.updateBackgroundColor = function()
 		$('#meos').css('background-color','white');
 	}
 	// device name
-	console.log(app.ui.misc.deviceName);
-	console.log(app.ui.getWiRocDeviceName());
 	if (app.ui.misc.deviceName != app.ui.getWiRocDeviceName())
 	{
 		$('#devicename').css('background-color','#FFEFD5');
 	} else {
 		$('#devicename').css('background-color','white');
+	}
+	// radio adv
+	if (app.ui.radio.acknowledgementRequested != app.ui.getAcknowledgementRequested())
+	{
+		$('#radio-adv').css('background-color','#FFEFD5');
+	} else {
+		$('#radio-adv').css('background-color','white');
 	}
 };
 
@@ -230,7 +194,6 @@ app.ui.displayDeviceList = function()
 	var timeNow = Date.now();
 	$.each(app.devices, function(key, device)
 	{
-		console.log("in loop");
 		// Only show devices that are updated during the last 10 seconds.
 		if (device.timeStamp + 10000 > timeNow)
 		{
@@ -279,6 +242,7 @@ app.ui.displayStatus = function(message)
 };
 
 app.ui.onConnectButton = function(event) {
+	app.btAddressToConnect = event.data.address;
 	app.connect(app.devices[event.data.address]);
 };
 
@@ -356,12 +320,13 @@ app.getAcknowledgementRequested = function(callback)
 		},
 		function(error) {
 			console.log('getack error');
-			app.radioErrorBar.show({
+			app.miscRadioAdvErrorBar.show({
 				html: 'Error getting radio settings (Acknowledgement): ' + error,
 			});
 		}
 	);
 };
+
 
 app.ui.getAcknowledgementRequested = function() {
 	return $('#acknowledgement').prop("checked") ? 1 : 0;
@@ -380,7 +345,7 @@ app.writeAcknowledgementRequested = function(callback)
 		new Uint8Array([ack]),
 		callback,
 		function(error) {
-			app.radioErrorBar.show({
+			app.miscRadioAdvErrorBar.show({
 				html: 'Error saving radio setting (Acknowledgement): ' + error,
 			});
 		}
@@ -429,10 +394,8 @@ app.writeDataRate = function(callback)
 	var dataRate = parseInt(app.ui.getDataRate());
 	console.log(dataRate);
 	var service = evothings.ble.getService(app.connectedDevice, app.radioService2);
-	console.log('asfd');
 	var characteristic = evothings.ble.getCharacteristic(service, app.radioDataRateCharacteristic);
 
-	console.log('asfd');
 	evothings.ble.writeCharacteristic(
 		app.connectedDevice,
 		characteristic,
@@ -454,11 +417,6 @@ app.ui.displayDataRate = function(dataRate)
 	app.ui.radio.dataRate = rawDataRate;
 	$(".datarate [type='radio'][value = '" + rawDataRate + "']").prop("checked", true).checkboxradio("refresh");
 	$(".datarate [type='radio']").not( "[value = '" + rawDataRate + "']").prop("checked", false).checkboxradio("refresh");
-	if (rawDataRate == 586) {
-		app.ui.showPredefinedChannelPage();
-	} else {
-		app.ui.showCustomChannelPage();
-	}
 	app.ui.updateBackgroundColor();
 };
 
@@ -473,7 +431,6 @@ app.getBatteryLevel = function(callback)
         	app.connectedDevice,
         	characteristic,
         	function(data) {
-			console.log(data);
 			callback(data);
 		},
 		function(error) {
@@ -488,7 +445,6 @@ app.getBatteryLevel = function(callback)
 
 app.ui.displayBatteryLevel = function(batteryLevel)
 {
-	console.log(batteryLevel.byteLength);
 	var dv = new DataView(batteryLevel, 0);
 	var rawBatteryLevel = dv.getUint8(0);
 	console.log('battery level: ' + rawBatteryLevel);
@@ -981,17 +937,32 @@ app.ui.onApplyBasicButton = function() {
         console.log('onApplyBasicButton');
 	app.writeChannel(function() {
         	console.log('writeChannel2');
-		app.writeAcknowledgementRequested(function() {
+		//app.writeAcknowledgementRequested(function() {
 			app.writeDataRate(function() {
 				app.radioSuccessBar.show({
 			    		html: 'Radio settings saved'
 				});
 
 				app.getChannel(app.ui.displayChannel);
-				app.getAcknowledgementRequested(app.ui.displayAcknowledgementRequested);
+				//app.getAcknowledgementRequested(app.ui.displayAcknowledgementRequested);
 				app.getDataRate(app.ui.displayDataRate);
 			});
+		//});
+	});
+};
+
+
+app.ui.onReadRadioAdvButton = function() {
+	app.readRadioAdvSettings();
+};
+
+app.ui.onApplyRadioAdvButton = function() {
+        console.log('onApplyRadioAdvButton');
+        app.writeAcknowledgementRequested(function() {
+		app.miscRadioAdvSuccessBar.show({
+			    html: 'Radio adv saved'
 		});
+		app.getAcknowledgementRequested(app.ui.displayAcknowledgementRequested);
 	});
 };
 
@@ -1618,7 +1589,6 @@ app.connect = function(device)
 	app.ui.displayStatus('Scan Paused');
 	clearInterval(app.ui.updateTimer);
 
-	console.log('connect('+device.address+')');
 	$('#wiroc-status-content').html('');
 	$('#wiroc-services-content').html('');
 	$('#wiroc-settings-content').html('');
@@ -1629,12 +1599,22 @@ app.connect = function(device)
 	$('#stopTestPunch').addClass('ui-disabled');
 	$('#testPunchLoading').hide();
 	
-        evothings.ble.connectToDevice(
-		device,
-		app.onConnected,
-		app.onDisconnected,
-		app.onConnectError,
-		{ discoverServices: true });
+	// Android connect error 133 might be prevented by waiting a
+	// little before connect (to make sure previous BLE operation
+	// has completed).
+	setTimeout(
+		function()
+		{
+                        console.log('connect('+device.address+')');
+			evothings.ble.connectToDevice(
+			device,
+			app.onConnected,
+			app.onDisconnected,
+			app.onConnectError,
+			{ discoverServices: true });
+		},
+	500);
+        
 };
 
 
@@ -1670,11 +1650,33 @@ app.onDisconnected = function(device)
 // Called when a connect error occurs.
 app.onConnectError = function(error)
 {
+    app.connectErrorCount++;
     console.log('Connect error: ' + error);
     app.searchDevicesErrorBar.show({
 		html: 'Connect error: ' + error
     });
-    evothings.ble.reset(function() { console.log('reset success'); },function() { console.log('reset fail'); });
+    
+    
+    // If we get Android connect error 133, we wait and try to connect again.
+    // This can resolve connect problems on Android when error 133 is seen.
+    // In a production app you may want to have a function for aborting or
+    // maximising the number of connect attempts. Note that attempting reconnect
+    // does not block the app however, so you can still do other tasks and
+    // update the UI of the app.
+    if (133 == error && app.connectErrorCount <=2)
+    {
+        console.log('Reconnecting...');
+        evothings.ble.close(app.devices[app.btAddressToConnect]);
+	setTimeout(
+             function() 
+             { 
+                app.connect(app.devices[app.btAddressToConnect]); 
+             }
+             ,1000);
+    } else {
+        app.connectErrorCount = 0;
+        evothings.ble.reset(function() { console.log('reset success'); },function() { console.log('reset fail'); });
+    }
 };
 
 app.disconnect = function()

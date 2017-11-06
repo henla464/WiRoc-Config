@@ -1,6 +1,6 @@
 {
   "name": "wiroc-config",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "title": "WiRoc Config",
   "description": "App used to configure WiRoc devices",
   "tags": [
