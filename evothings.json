@@ -1,6 +1,6 @@
 {
   "name": "wiroc-config",
-  "version": "0.1.6",
+  "version": "0.1.8",
   "title": "WiRoc Config",
   "description": "App used to configure WiRoc devices",
   "tags": [
@@ -21,6 +21,10 @@
     {
       "name": "cordova-plugin-ble",
       "version": "2.0.1"
+    },
+    {
+      "name": "cordova-plugin-http",
+      "version": "v0.2.2"
     }
   ],
   "long-description": "App used to configure WiRoc devices",

@@ -6,7 +6,6 @@
 		shrink-to-fit=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
 
 	<title>WiRoc Config</title>
-
 	<style>
 		@import 'ui/css/jquery.mobile-1.4.5.css';
 	</style> 
@@ -146,11 +145,11 @@
 			font-size:7vw;
 		}
 
-		#battery-indicator {
+		.battery-indicator {
 			right: 35vw;
 			position: absolute;
-			top:1.5vw;
-			width:8vw;
+			top:2.5vw;
+			width:11vw;
 			height:5vw;
 		}
 
@@ -159,7 +158,7 @@
 			height: 5vw;
 			border: 2px solid #000;
 			background-color: #fff;
-			top: 1vw;
+			top: 0vw;
 			position:absolute;
 		}
 		.battery:after {
@@ -330,6 +329,10 @@
 		.test-punch-row-3 .ui-field-contain {
 			padding:0px;
 		}
+
+		.ui-tabs-panel {
+			overflow:auto;
+		}
     </style>
 	<script>
 	// Redirect console.log to Evothings Workbench.
@@ -342,33 +345,56 @@
 	<script src="libs/jquery/jquery.mobile-1.4.5.js"></script>
 	<script src="libs/evothings/evothings.js"></script>
 	<script src="libs/evothings/ui/ui.js"></script>
+	<script type="text/javascript" src="libs/jquery.actuals/jquery.actual.js"></script>
 	<script src="app.js"></script>
 	<script>
-		function adjustHeight() {
+		function adjustDimensions() {
 			var viewPortHeight = $(window).height();
-			// only one header will have a height
-			//var headerHeight = $('#page-device-scan div[data-role="header"]').height() + 
-			//	$('#page-basic-config  div[data-role="header"]').height() +
-			//	$('#page-advanced-config div[data-role="header"]').height();
-			//console.log("header: " + headerHeight);
+			var scanHeaderHeight = $('#page-device-scan div[data-role="header"]').actual('outerHeight', { includeMargin : true });
+			var basicHeaderHeight = $('#page-basic-config div[data-role="header"]').actual('outerHeight', { includeMargin : true });
+			var advHeaderHeight = $('#page-advanced-config div[data-role="header"]').actual('outerHeight', { includeMargin : true });
 			var contentHeight = viewPortHeight - 52;
 			var contentHeight2 = viewPortHeight - 56;
-        		var deviceNameHeight = 20;
-			var tabHeaderHeight = 40;
-			$('#page-device-scan div[role="main"]').css({'min-height': contentHeight + 'px'});
-			$('#page-basic-config div[role="main"]').css({'min-height': contentHeight + 'px'});
-			$('#page-advanced-config div[role="main"]').css({'min-height': contentHeight + 'px'});
-			$('#tabs-main').css({'min-height': (contentHeight2 - deviceNameHeight) + 'px'});
-			$('#tabs-adv').css({'min-height': contentHeight2 + 'px'});
+        		var deviceNameHeight = $('#device-name').actual('outerHeight', { includeMargin : true });
+			var tabHeaderHeight = $('#page-basic-config div[data-role="navbar"]').actual('outerHeight', { includeMargin : true });
+			var advTabHeaderHeight = $('#page-advanced-config div[data-role="navbar"]').actual('outerHeight', { includeMargin : true });
+			var tabControlPaddingHeight = (0.2*16); // 0.2 em, 16px font
+			var tabContentPaddingHeight = (2*document.documentElement.clientWidth) / 100;
 
-			$('#radio').css({'min-height': (contentHeight2 - deviceNameHeight -tabHeaderHeight) + 'px'});
+			$('#page-device-scan div[role="main"]').css({'min-height': (viewPortHeight - scanHeaderHeight) + 'px'});
+			$('#page-basic-config div[role="main"]').css({'min-height': (viewPortHeight - basicHeaderHeight) + 'px'});
+			$('#page-advanced-config div[role="main"]').css({'min-height': (viewPortHeight - advHeaderHeight) + 'px'});
+			$('#tabs-main').css({'min-height': (viewPortHeight - basicHeaderHeight - deviceNameHeight-2*tabControlPaddingHeight) + 'px'});
+			$('#tabs-adv').css({'min-height': (viewPortHeight - advHeaderHeight - 2*tabControlPaddingHeight) + 'px'});
+
+			$('#radio').css({'min-height': (viewPortHeight - basicHeaderHeight - deviceNameHeight - tabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
+			$('#sirap').css({'min-height': (viewPortHeight - basicHeaderHeight - deviceNameHeight - tabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
+			$('#test').css({'min-height': (viewPortHeight - basicHeaderHeight - deviceNameHeight - tabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
+			$('#network').css({'min-height': (viewPortHeight - basicHeaderHeight - deviceNameHeight - tabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
+			$('#database').css({'min-height': (viewPortHeight - basicHeaderHeight - deviceNameHeight - tabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
+
+			$('#devicename').css({'min-height': (viewPortHeight - advHeaderHeight - advTabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
+			$('#status').css({'min-height': (viewPortHeight - advHeaderHeight - advTabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
+			$('#services').css({'min-height': (viewPortHeight - advHeaderHeight - advTabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
+			$('#settings').css({'min-height': (viewPortHeight - advHeaderHeight -  advTabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
+			$('#punches').css({'min-height': (viewPortHeight - advHeaderHeight -  advTabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
+			$('#database-adv').css({'min-height': (viewPortHeight - advHeaderHeight -  advTabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
+			$('#radio-adv').css({'min-height': (viewPortHeight - advHeaderHeight -  advTabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
+
+			var menuButtonHeight = $('#page-device-scan #menu-right').actual('outerHeight', { includeMargin : true });
+			$('.header-logo').css({'height': (menuButtonHeight+3) + 'px'});
+
+			var menuButtonWidth = $('#menu-right').actual('outerWidth', { includeMargin : true });
+			var distanceBetweenBatteryAndMenu = 3+(2*document.documentElement.clientWidth) / 100;
+			$('.battery-indicator').css({'right': (menuButtonWidth+distanceBetweenBatteryAndMenu) + 'px'});
+
                 }
 
 		$(document).ready(function() {
 			app.networkInfoBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#80d4ff' });
 
 			app.radioSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#99ff99' });
-			app.meosSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-meos'), autohide: true, backgroundColor: '#99ff99' });
+			app.sirapSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-sirap'), autohide: true, backgroundColor: '#99ff99' });
 			app.miscDeviceNameSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-devicename'), autohide: true, backgroundColor: '#99ff99' });
 			app.networkSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#99ff99' });
 			app.miscSettingsSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-settings'), autohide: true, backgroundColor: '#99ff99' });
@@ -380,7 +406,7 @@
 			app.searchDevicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-search-devices'), autohide: true, backgroundColor: '#ffbf00' });
 			app.batteryErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#ffbf00' });
 			app.radioErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#ffbf00' });
-			app.meosErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-meos'), autohide: true, backgroundColor: '#ffbf00' });
+			app.sirapErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-sirap'), autohide: true, backgroundColor: '#ffbf00' });
 			app.networkErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#ffbf00' });
 			app.miscStatusErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-status'), autohide: true, backgroundColor: '#ffbf00' });
 			app.miscDeviceNameErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-devicename'), autohide: true, backgroundColor: '#ffbf00' });
@@ -393,7 +419,7 @@
 			
 			$('#wifiConnect').click(app.ui.onWifiPasswordConnectButton);
 			$('#saveSettingButton').click(app.ui.onEditSettingSaveButton);
-
+			
 			$(":mobile-pagecontainer").on( "pagecontainerbeforechange", function( event, ui ) {
 				if (typeof ui.toPage == "object") {
 					var urlArray = ui.absUrl.split("#");
@@ -422,10 +448,10 @@
 							setTimeout(function(){ $('#tab-' + app.basicConfigTab).trigger('click'); }, 500);
 						}
 					}
-					adjustHeight();
+					adjustDimensions();
 				}
 			} );
-			
+			adjustDimensions();
 
 			// update the background 
 			$("#channel-select").on( "change", function(event, ui) {
@@ -435,16 +461,20 @@
 			$('input[type=radio][name=radio-choice-data-rate]').on("change", function(event, ui) {
 				app.ui.updateBackgroundColor();
 			});
-			$("#sendtomeosenabled").on("change", function(event, ui) {
+			$("#sendtosirapenabled").on("change", function(event, ui) {
 				app.ui.updateBackgroundColor();
 			});
-			$("#sendtomeosip").on("input propertychange paste", function(event, ui) {
+			$("#sendtosirapip").on("input propertychange paste", function(event, ui) {
 				app.ui.updateBackgroundColor();
 			});
-			$('#sendtomeosipport').on("input propertychange paste", function(event, ui) {
+			$('#sendtosirapipport').on("input propertychange paste", function(event, ui) {
 				app.ui.updateBackgroundColor();
 			});
+
 			$("#acknowledgement").on( "change", function(event, ui) {
+				app.ui.updateBackgroundColor();
+			});
+			$('#wirocdevicename').on("input propertychange paste", function(event, ui) {
 				app.ui.updateBackgroundColor();
 			});
 
@@ -477,48 +507,38 @@
 
 			$( "#tabs-main" ).on( "tabsactivate", function( event, ui ) { 
 				app.basicConfigTab = ui.newTab.data("tabname");
-				if (ui.newTab.data("tabname") == "radio") {
-					app.readBasicSettings();
-				} else if (ui.newTab.data("tabname") == "meos") {
-					app.readMeosSettings();
-				};
+				//if (ui.newTab.data("tabname") == "radio") {
+				//	app.readBasicSettings();
+				//} else if (ui.newTab.data("tabname") == "sirap") {
+				//	app.readSirapSettings();
+				//};
 			} );
 			$( "#tabs-adv" ).on( "tabsactivate", function( event, ui ) { 
 				app.advancedConfigTab = ui.newTab.data("tabname");
+				//if (ui.newTab.data("tabname") == "radio-adv") {
+				//	app.getAcknowledgementRequested();
+				//};
 			} );
-
-			 //$(window).bind('resize', function (event) {
-			//	var content_height = $.mobile.activePage.children('[data-role="content"]').height(),
-			//	    header_height  = $.mobile.activePage.children('[data-role="header"]').height(),
-			//	    footer_height  = $.mobile.activePage.children('[data-role="footer"]').height(),
-			//	    window_height  = $(this).height();
-			//	    console.log("window: " + window_height + " headerheight: " + header_height + " footerHeight: " + footer_height + " content: " + content_height);
-
-				//if (content_height < (window_height - header_height - footer_height)) {
-				//    $.mobile.activePage.css('min-height', (content_height + header_height + footer_height));
-				//    setTimeout(function () {
-				//	$.mobile.activePage.children('[data-role="footer"]').css('top', 0);
-				//    }, 500);
-				//}
-			//	event.stopImmediatePropagation();
-			//    }).trigger('resize');
-			//All pages at least 100% of viewport height
-			
 		});
 	</script>
 </head>
 <body ontouchstart=""><!-- ontouchstart="" enables low-delay CSS transitions. -->
 	<div id="page-device-scan" data-role="page">
 		<div data-role="header" data-position="fixed">
-			<img class="header-logo" src="res/logo.png"/>
+			<img class="header-logo" src="ui/images/logo.png"/>
+			<ul id="menu-right" data-role="menu" style="visibility: hidden">
+			<li>
+				<a href="#" onclick="return false;" data-role="button" data-icon="gear" data-inline="true" data-iconpos="right">Options</a>
+			</li>
+			</ul>
 		</div>
 		
  		<div role="main" class="ui-content" class="page" style="padding:0">
 			<div id="notification-search-devices" style="height:0px"></div>
-			<a href="#page-basic-config" data-transition="slide">Slide</a>
+			<!--<a href="#page-basic-config" data-transition="slide">Slide</a>-->
 			<a href="#" onclick="app.ui.onScanButton()" class="ui-btn ui-btn-inline ui-corner-all scan-button">Start scan</a>
 	
-			<p id="scan-status" class="scan-status">Scanning Paused</p>
+			<p id="scan-status" class="scan-status">Not scanning</p>
 	
 			<ul id="found-devices" class="dynamic"></ul>
 		</div>
@@ -528,9 +548,9 @@
 	
 	<div id="page-basic-config" data-role="page">
 		<div data-role="header" data-position="fixed">
-			<a href="#page-device-scan" id="menu-left" class="ui-btn ui-corner-all ui-btn-inline ui-mini ui-btn-icon-left ui-icon-carat-l" data-rel="back" data-transition="slide">Back</a>			
-			<img class="header-logo" src="res/logo.png"/>
-			<div id="battery-indicator">
+			<a href="#page-device-scan" id="menu-left" style="top:3px;left:5px" class="ui-btn ui-corner-all ui-btn-inline ui-mini ui-btn-icon-left ui-icon-carat-l" data-rel="back" data-transition="slide">Back</a>			
+			<img class="header-logo" src="ui/images/logo.png"/>
+			<div class="battery-indicator">
 				<div id="battery" class="battery">
 					<div class="level charging"></div>
 				</div>
@@ -556,7 +576,7 @@
 				<h1>WiRoc Config</h1>
 
 				<table>
-					<tr><td>Version</td><td>0.1.6</td></tr>
+					<tr><td>Version</td><td>0.1.7</td></tr>
 					<tr><td></td><td></td></tr>
 					<tr><td></td><td></td></tr>
 					<tr><td></td><td></td></tr>
@@ -569,7 +589,7 @@
 			 	<div data-role="navbar">
 					<ul>
 					<li data-tabname="radio"><a href="#radio" data-ajax="false" id="tab-radio" class="ui-btn-active ui-state-persist">Radio</a></li>
-					<li data-tabname="meos"><a href="#meos" data-ajax="false" id="tab-meos">SIRAP-tcp/ip</a></li>
+					<li data-tabname="sirap"><a href="#sirap" data-ajax="false" id="tab-sirap">SIRAP-tcp/ip</a></li>
 					<li data-tabname="test"><a href="#test" data-ajax="false" id="tab-test">Test</a></li>
 					<li data-tabname="network"><a href="#network" data-ajax="false" id="tab-network">Network</a></li>
 					<li data-tabname="database"><a href="#database" data-ajax="false" id="tab-database">Database</a></li>
@@ -612,25 +632,25 @@
 						</div>
 					</div>
 				</div>			
-				<div id="meos" class="ui-body-d ui-content" style="padding:2vw">
-					<div id="notification-meos" style="height:1px"></div>
+				<div id="sirap" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-sirap" style="height:1px"></div>
 					<div class="ui-field-contain advanced-config">
-						<label for="sendtomeosenabled">Send punches via SIRAP-tcp/ip</label>
-						<input type="checkbox" name="sendtomeosenabled" id="sendtomeosenabled">
+						<label for="sendtosirapenabled">Send punches via SIRAP-tcp/ip</label>
+						<input type="checkbox" name="sendtosirapenabled" id="sendtosirapenabled">
 					</div>
 					<div class="ui-field-contain advanced-config">
-						<label for="sendtomeosip">IP&nbsp;address:</label>
-						<input type="text" name="sendtomeosip" id="sendtomeosip">
+						<label for="sendtosirapip">IP&nbsp;address:</label>
+						<input type="text" name="sendtosirapip" id="sendtosirapip">
 					</div>
 					<div class="ui-field-contain advanced-config">
-						<label for="sendtomeosipport">Port:</label>
-						<input type="number" min="1" max="65535" name="sendtomeosipport" id="sendtomeosipport">
+						<label for="sendtosirapipport">Port:</label>
+						<input type="number" min="1" max="65535" name="sendtosirapipport" id="sendtosirapipport">
 					</div>
 
 					<div style="text-align:center">
 						<div style="display:inline-block">
-							<a href="#" onclick="app.ui.onReadMeosButton()" class="ui-btn ui-btn-inline ui-corner-all read-basic-button">Read</a>
-							<a href="#" onclick="app.ui.onApplyMeosButton()" class="ui-btn ui-btn-inline ui-corner-all apply-basic-button">Save</a>
+							<a href="#" onclick="app.ui.onReadSirapButton()" class="ui-btn ui-btn-inline ui-corner-all read-basic-button">Read</a>
+							<a href="#" onclick="app.ui.onApplySirapButton()" class="ui-btn ui-btn-inline ui-corner-all apply-basic-button">Save</a>
 						</div>
 					</div>
 				</div>
@@ -720,7 +740,7 @@
 					<hr/>
 					<div style="text-align:left">
 						<div style="display:inline-block">
-							Renew IP: <span id="ipaddress" /><br/>
+							Renew IP: <span id="ipaddress"></span><br/>
 							<a href="#" onclick="app.ui.onRenewIPWifi()" class="ui-btn ui-btn-inline ui-corner-all" style="min-width:25vw">Wifi</a>
 							<a href="#" onclick="app.ui.onRenewIPEthernet()" class="ui-btn ui-btn-inline ui-corner-all" style="min-width:25vw">Ethernet</a>
 						</div>
@@ -753,26 +773,10 @@
 
 
 	<div id="page-advanced-config" data-role="page">
-		<div data-role="popup" id="popup-about-2" data-dismissible="true">
-			<a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
-			<div data-role="header" data-theme="a">
-				<h1>About</h1>
-			</div>
-			<span>
-				<h1>WiRoc Config</h1>
-
-				<table>
-					<tr><td>Version</td><td>0.1.6</td></tr>
-					<tr><td></td><td></td></tr>
-					<tr><td></td><td></td></tr>
-					<tr><td></td><td></td></tr>
-				</table>
-			</span>
-		</div>
 		<div data-role="header" data-position="fixed">
 			<a href="#page-device-scan" id="menu-left" class="ui-btn ui-corner-all ui-btn-inline ui-mini ui-btn-icon-left ui-icon-carat-l" data-rel="back" data-transition="slide">Back</a>			
-			<img class="header-logo" src="res/logo.png"/>
-			<div id="battery-indicator">
+			<img class="header-logo" src="ui/images/logo.png"/>
+			<div class="battery-indicator">
 				<div id="battery" class="battery">
 					<div class="level"></div>
 				</div>
@@ -787,7 +791,22 @@
 			</li>
 			</ul>      
 		</div>
+		<div data-role="popup" id="popup-about-2" data-dismissible="true">
+			<a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
+			<div data-role="header" data-theme="a">
+				<h1>About</h1>
+			</div>
+			<span>
+				<h1>WiRoc Config</h1>
 
+				<table>
+					<tr><td>Version</td><td>0.1.7</td></tr>
+					<tr><td></td><td></td></tr>
+					<tr><td></td><td></td></tr>
+					<tr><td></td><td></td></tr>
+				</table>
+			</span>
+		</div>
 		
 		<div role="main" class="ui-content" class="page" style="padding:0">
 			<h1 id="device-name" style="font-size:5vw;text-align: center;margin:0"></h1>
@@ -806,7 +825,7 @@
 				<div id="devicename" class="ui-body-d ui-content" style="padding:2vw">
 					<div id="notification-devicename" style="height:1px"></div>
 					<div class="ui-field-contain advanced-config">
-						<label for="sendtomeosip">Device Name:</label>
+						<label for="sendtosirapip">Device Name:</label>
 						<input type="text" name="wirocdevicename" id="wirocdevicename">
 					</div>
 					<div style="text-align:left">
@@ -842,6 +861,7 @@
 						</div>
 					</div>
 					<div id="wiroc-settings-content"></div>
+					<a href="#" onclick="app.ui.onAddSetting()" class="ui-btn ui-btn-inline ui-corner-all">Add setting</a>
 					<div data-role="popup" id="popupAddEditSetting" data-theme="a" class="ui-corner-all">
 						<div style="padding:10px 20px;">
 							<h3>Setting</h3>

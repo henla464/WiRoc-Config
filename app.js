@@ -14,8 +14,8 @@ app.searchDevicesErrorBar = null;
 app.batteryErrorBar = null;
 app.radioErrorBar = null;
 app.radioSuccessBar = null;
-app.meosErrorBar = null;
-app.meosSuccessBar = null;
+app.sirapErrorBar = null;
+app.sirapSuccessBar = null;
 app.networkErrorBar = null;
 app.networkSuccessBar = null;
 app.miscDeviceNameErrorBar = null;
@@ -32,7 +32,7 @@ app.miscRadioAdvErrorBar = null;
 app.miscRadioAdvSuccessBar = null;
 app.miscTestPunchesSuccessBar = null;
 app.miscTestPunchesErrorBar = null;
-app.miscBatteryCharacteristic = null;
+
 
 app.radioService = 'f6026b69-9254-fd82-0242-60d9aaff57dc';
 app.radioService2 =                      'dc57ffaa-d960-4202-82fd-5492696b02f6';
@@ -40,10 +40,10 @@ app.radioService2 =                      'dc57ffaa-d960-4202-82fd-5492696b02f6';
 app.radioChannelCharacteristic =         'dc57ffab-d960-4202-82fd-5492696b02f6';
 app.radioAcknowledgementCharacteristic = 'dc57ffac-d960-4202-82fd-5492696b02f6';
 app.radioDataRateCharacteristic =        'dc57ffad-d960-4202-82fd-5492696b02f6';
-app.meosService = 				'6e30b300-be1b-401c-8a6d-1a59d5c23c64';
-app.sendToMeosEnabledCharacteristic =         	'6e30b301-be1b-401c-8a6d-1a59d5c23c64';
-app.sendToMeosIPCharacteristic = 		'6e30b302-be1b-401c-8a6d-1a59d5c23c64';
-app.sendToMeosIPPortCharacteristic =        	'6e30b303-be1b-401c-8a6d-1a59d5c23c64';
+app.sirapService = 				'6e30b300-be1b-401c-8a6d-1a59d5c23c64';
+app.sendToSirapEnabledCharacteristic =         	'6e30b301-be1b-401c-8a6d-1a59d5c23c64';
+app.sendToSirapIPCharacteristic = 		'6e30b302-be1b-401c-8a6d-1a59d5c23c64';
+app.sendToSirapIPPortCharacteristic =        	'6e30b303-be1b-401c-8a6d-1a59d5c23c64';
 app.batteryService = 				'0000180f-0000-1000-8000-00805f9b34fb';
 app.batteryLevelCharacteristic =         	'00002a19-0000-1000-8000-00805f9b34fb';
 app.networkService = 				'f5ea6200-bcc5-4406-a981-89c6c5fc09cf';
@@ -60,6 +60,11 @@ app.miscServicesCharacteristic = 		'fb880905-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscDatabaseCharacteristic = 		'fb880906-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscTestPunchesCharacteristic = 		'fb880907-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscBatteryCharacteristic = 		'fb880908-4ab2-40a2-a8f0-14cc1c2e5608';
+app.miscAllCharacteristic = 			'fb880909-4ab2-40a2-a8f0-14cc1c2e5608';
+app.miscDeviceNameCharacteristic =		'fb88090A-4ab2-40a2-a8f0-14cc1c2e5608';
+
+app.isScanning = false;
+app.backendApiKey = '67f11087-32c5-4dc5-9987-bbdecb028d36';
 
 // UI methods.
 app.ui = {};
@@ -67,10 +72,10 @@ app.ui.radio = {};
 app.ui.radio.channel = null;
 app.ui.radio.dataRate = null;
 app.ui.radio.acknowledgementRequested = null;
-app.ui.meos = {};
-app.ui.meos.sendToMeosEnabled = null;
-app.ui.meos.sendToMeosIP = null;
-app.ui.meos.sendToMeosIPPort = null;
+app.ui.sirap = {};
+app.ui.sirap.sendToSirapEnabled = null;
+app.ui.sirap.sendToSirapIP = null;
+app.ui.sirap.sendToSirapIPPort = null;
 app.ui.misc = {};
 app.ui.misc.deviceName = null;
 app.ui.misc.noOfTestPunchesToSend = null;
@@ -98,37 +103,31 @@ app.onDeviceReady = function()
 };
 
 app.ui.onScanButton = function() {
-	if (true) {
-		app.ui.onStartScanButton();
+	if (!app.isScanning) {
+		app.isScanning = true;
+		$('.scan-button').html('Stop scan');
+		app.disconnect();
+		app.devices = {};
+		app.ui.displayDeviceList();
+		app.ui.displayStatus('Scanning...');
+		evothings.ble.startScan(
+			app.ui.deviceFound,
+			app.ui.scanError,
+			{  });
+		app.ui.updateTimer = setInterval(app.ui.displayDeviceList, 500);
 	} else {
-		app.ui.onStopScanButton();
+		app.stopScan();
 	}
 }
 
-// Called when Start Scan button is selected.
-app.ui.onStartScanButton = function()
-{
-	app.disconnect();
-	app.devices = {};
-	app.ui.displayDeviceList();
-	app.ui.displayStatus('Scanning...');
-	evothings.ble.startScan(
-    		app.ui.deviceFound,
-		app.ui.scanError,
-		{  });
-	app.ui.updateTimer = setInterval(app.ui.displayDeviceList, 500);
-};
-
-// Called when Stop Scan button is selected.
-app.ui.onStopScanButton = function()
-{
-	//app.stopScan();
-        evothings.ble.stopScan()
-	//app.devices = {};
+app.stopScan = function() {
+	app.isScanning = false;
+	$('.scan-button').html('Start scan');
+	evothings.ble.stopScan()
 	app.ui.displayStatus('Scan stopped');
-	//app.ui.displayDeviceList();
 	clearInterval(app.ui.updateTimer);
 };
+
 
 // Called when a device is found.
 app.ui.deviceFound = function(device) //, errorCode)
@@ -142,11 +141,12 @@ app.ui.deviceFound = function(device) //, errorCode)
     	{
 		// Set timestamp for device (this is used to remove inactive devices).
 		device.timeStamp = Date.now();
-		console.log('Found device: ' + device.name);
+		//console.log('Found device: ' + device.name);
 		// Insert the device into table of found devices.
 		app.devices[device.address] = device;
     	}
 };
+
 
 app.ui.scanError = function(errorCode)
 {
@@ -162,14 +162,16 @@ app.ui.updateBackgroundColor = function()
 	} else {
 		$('#radio').css('background-color','white');
 	}
-	// meos
-	if (app.ui.meos.sendToMeosEnabled != app.ui.getSendToMeosEnabled() || app.ui.meos.sendToMeosIP != app.ui.getSendToMeosIP() || app.ui.meos.sendToMeosIPPort != app.ui.getSendToMeosIPPort())
+	// sirap
+	if (app.ui.sirap.sendToSirapEnabled != app.ui.getSendToSirapEnabled() || app.ui.sirap.sendToSirapIP != app.ui.getSendToSirapIP() || app.ui.sirap.sendToSirapIPPort != app.ui.getSendToSirapIPPort())
 	{
-		$('#meos').css('background-color','#FFEFD5');
+		$('#sirap').css('background-color','#FFEFD5');
 	} else {
-		$('#meos').css('background-color','white');
+		$('#sirap').css('background-color','white');
 	}
 	// device name
+ 	console.log('updatebackgroundcolor: ' + app.ui.misc.deviceName);
+ 	console.log('updatebackgroundcolor: ' + app.ui.getWiRocDeviceName());
 	if (app.ui.misc.deviceName != app.ui.getWiRocDeviceName())
 	{
 		$('#devicename').css('background-color','#FFEFD5');
@@ -242,6 +244,7 @@ app.ui.displayStatus = function(message)
 };
 
 app.ui.onConnectButton = function(event) {
+	app.connectErrorCount = 0;
 	app.btAddressToConnect = event.data.address;
 	app.connect(app.devices[event.data.address]);
 };
@@ -249,9 +252,16 @@ app.ui.onConnectButton = function(event) {
 // Channel
 app.ui.displayChannel = function(channel)
 {
-	var raw = new DataView(channel).getUint8(0, true);
-	console.log('channel: ' + raw);
+	console.log("displayChannel");
+	var raw = 1;
+	if (typeof channel === 'number') {
+		raw = channel;
+	} else {
+		raw = new DataView(channel).getUint8(0, true);
+	}
 	app.ui.radio.channel = raw;
+	console.log('channel: ' + raw);
+
 	// Select the relevant option, de-select any others
 	$('#channel-select').val(raw).attr('selected', true).siblings('option').removeAttr('selected');
 
@@ -355,9 +365,16 @@ app.writeAcknowledgementRequested = function(callback)
 
 app.ui.displayAcknowledgementRequested = function(acknowledgement)
 {
-	var raw = new DataView(acknowledgement).getUint8(0, true);
+	console.log("displayAcknowledgementRequested");
+	var raw = 0;
+	if (typeof acknowledgement === 'boolean') {
+		raw = (acknowledgement ? 1 : 0);
+	} else {
+		raw = new DataView(acknowledgement).getUint8(0, true);
+	}
 	app.ui.radio.acknowledgementRequested = raw;
 	console.log('ack: ' + raw);
+        $('#acknowledgement').checkboxradio();
 	$('#acknowledgement').prop("checked",raw != 0).checkboxradio("refresh");
 	app.ui.updateBackgroundColor();
 };
@@ -412,9 +429,15 @@ app.writeDataRate = function(callback)
 
 app.ui.displayDataRate = function(dataRate)
 {
-	var rawDataRate = new DataView(dataRate).getUint16(0, true);
-	console.log('data rate: ' + rawDataRate);
+	console.log("displayDataRate");
+	var rawDataRate = 0;
+	if (typeof dataRate === 'number') {
+		rawDataRate = dataRate;
+	} else {
+		rawDataRate = new DataView(dataRate).getUint16(0, true);
+	}
 	app.ui.radio.dataRate = rawDataRate;
+	console.log('data rate: ' + rawDataRate);
 	$(".datarate [type='radio'][value = '" + rawDataRate + "']").prop("checked", true).checkboxradio("refresh");
 	$(".datarate [type='radio']").not( "[value = '" + rawDataRate + "']").prop("checked", false).checkboxradio("refresh");
 	app.ui.updateBackgroundColor();
@@ -445,10 +468,14 @@ app.getBatteryLevel = function(callback)
 
 app.ui.displayBatteryLevel = function(batteryLevel)
 {
-	var dv = new DataView(batteryLevel, 0);
-	var rawBatteryLevel = dv.getUint8(0);
+	var rawBatteryLevel = 0;
+	if (typeof batteryLevel === 'number') {
+		rawBatteryLevel = batteryLevel;
+	} else {
+		var dv = new DataView(batteryLevel, 0);
+		rawBatteryLevel = dv.getUint8(0);
+	}
 	console.log('battery level: ' + rawBatteryLevel);
-
 	levelBar = $('.level');
 	levelBar.removeClass('high');
 	levelBar.removeClass('med');
@@ -492,8 +519,13 @@ app.getIsCharging = function(callback)
 app.ui.displayIsCharging = function(isCharging)
 {
 	console.log("displayBatteryCharging");
-	var dv = new DataView(isCharging, 0);
-	var rawIsCharging = dv.getUint8(0);
+	var rawIsCharging = false;
+	if (typeof isCharging === 'boolean') {
+		rawIsCharging = isCharging;
+	} else {
+		var dv = new DataView(isCharging, 0);
+		var rawIsCharging = dv.getUint8(0);
+	}
 	console.log('IsCharging: ' + rawIsCharging);
 
 	levelBar = $('.level');
@@ -505,12 +537,12 @@ app.ui.displayIsCharging = function(isCharging)
 };
 
 
-//-- Send to Meos enabled
-app.getSendToMeosEnabled = function(callback)
+//-- Send to Sirap enabled
+app.getSendToSirapEnabled = function(callback)
 {
-	console.log('getSendToMeosEnabled');
-	var service = evothings.ble.getService(app.connectedDevice, app.meosService);
-	var characteristic = evothings.ble.getCharacteristic(service, app.sendToMeosEnabledCharacteristic);
+	console.log('getSendToSirapEnabled');
+	var service = evothings.ble.getService(app.connectedDevice, app.sirapService);
+	var characteristic = evothings.ble.getCharacteristic(service, app.sendToSirapEnabledCharacteristic);
 	evothings.ble.readCharacteristic(
         	app.connectedDevice,
         	characteristic,
@@ -518,43 +550,49 @@ app.getSendToMeosEnabled = function(callback)
 			callback(data);
 		},
 		function(error) {
-			app.meosErrorBar.show({
-				html: 'Error getting Meos settings (Enabled): ' + error
+			app.sirapErrorBar.show({
+				html: 'Error getting Sirap settings (Enabled): ' + error
 			});
 		}
 	);
 };
 
-app.ui.getSendToMeosEnabled = function() {
-	return $('#sendtomeosenabled').prop("checked") ? 1 : 0;
+app.ui.getSendToSirapEnabled = function() {
+	return $('#sendtosirapenabled').prop("checked") ? 1 : 0;
 };
 
 
-app.writeSendToMeosEnabled = function(callback)
+app.writeSendToSirapEnabled = function(callback)
 {
-	console.log('write send to meos enabled');
-	var meosEnabled = app.ui.getSendToMeosEnabled();
-	var service = evothings.ble.getService(app.connectedDevice, app.meosService)
-	var characteristic = evothings.ble.getCharacteristic(service, app.sendToMeosEnabledCharacteristic)
+	console.log('write send to sirap enabled');
+	var sirapEnabled = app.ui.getSendToSirapEnabled();
+	var service = evothings.ble.getService(app.connectedDevice, app.sirapService)
+	var characteristic = evothings.ble.getCharacteristic(service, app.sendToSirapEnabledCharacteristic)
 	evothings.ble.writeCharacteristic(
 		app.connectedDevice,
 		characteristic,
-		new Uint8Array([meosEnabled]),
+		new Uint8Array([sirapEnabled]),
 		callback,
 		function(error) {
-			app.meosErrorBar.show({
-				html: 'Error saving Meos settings (Enabled): ' + error
+			app.sirapErrorBar.show({
+				html: 'Error saving Sirap settings (Enabled): ' + error
 			});
 		}
 	);
 };
 
-app.ui.displaySendToMeosEnabled = function(meosEnabled)
+app.ui.displaySendToSirapEnabled = function(sirapEnabled)
 {
-	var raw = new DataView(meosEnabled).getUint8(0, true);
-	app.ui.meos.sendToMeosEnabled = raw;
-	console.log('send to meos enabled: ' + raw);
-	$('#sendtomeosenabled').prop("checked",raw != 0).checkboxradio("refresh");
+	console.log("displaySendToSirapEnabled");
+	var raw = false;
+	if (typeof sirapEnabled === 'boolean') {
+		raw = (sirapEnabled ? 1 : 0);
+	} else {
+		var raw = new DataView(sirapEnabled).getUint8(0, true);
+	}
+	app.ui.sirap.sendToSirapEnabled = raw;
+	console.log('send to sirap enabled: ' + raw);
+	$('#sendtosirapenabled').prop("checked",raw != 0).checkboxradio("refresh");
 	app.ui.updateBackgroundColor();
 };
 
@@ -573,12 +611,12 @@ app.validateIPaddress = function(ipaddress)
 	return false;
 }
 
-//-- Send to Meos ip
-app.getSendToMeosIP = function(callback)
+//-- Send to Sirap ip
+app.getSendToSirapIP = function(callback)
 {
-	console.log('getSendToMeosIP');
-	var service = evothings.ble.getService(app.connectedDevice, app.meosService);
-	var characteristic = evothings.ble.getCharacteristic(service, app.sendToMeosIPCharacteristic);
+	console.log('getSendToSirapIP');
+	var service = evothings.ble.getService(app.connectedDevice, app.sirapService);
+	var characteristic = evothings.ble.getCharacteristic(service, app.sendToSirapIPCharacteristic);
 	evothings.ble.readCharacteristic(
         	app.connectedDevice,
         	characteristic,
@@ -586,60 +624,66 @@ app.getSendToMeosIP = function(callback)
 			callback(data);
 		},
 		function(error) {
-			app.meosErrorBar.show({
-				html: 'Error getting Meos settings (IP): ' + error
+			app.sirapErrorBar.show({
+				html: 'Error getting Sirap settings (IP): ' + error
 			});
 		}
 	);
 };
 
-app.ui.getSendToMeosIP = function() {
-	var meosIP = $("#sendtomeosip").val();
-	return meosIP;
+app.ui.getSendToSirapIP = function() {
+	var sirapIP = $("#sendtosirapip").val();
+	return sirapIP;
 };
 
-app.writeSendToMeosIP = function(callback)
+app.writeSendToSirapIP = function(callback)
 {
-	console.log('write meos ip');
-	var meosIP = app.ui.getSendToMeosIP();
-	if (!app.validateIPaddress(meosIP)) {
-		app.meosErrorBar.show({
-			html: 'Meos IP Address incorrect format'
+	console.log('write sirap ip');
+	var sirapIP = app.ui.getSendToSirapIP();
+	if (!app.validateIPaddress(sirapIP)) {
+		app.sirapErrorBar.show({
+			html: 'Sirap IP Address incorrect format'
 		});
 	} else {
-		var te = new TextEncoder("utf-8").encode(meosIP);
-		var meosIPArray = new Uint8Array(te);
-		var service = evothings.ble.getService(app.connectedDevice, app.meosService)
-		var characteristic = evothings.ble.getCharacteristic(service, app.sendToMeosIPCharacteristic)
+		var te = new TextEncoder("utf-8").encode(sirapIP);
+		var sirapIPArray = new Uint8Array(te);
+		var service = evothings.ble.getService(app.connectedDevice, app.sirapService)
+		var characteristic = evothings.ble.getCharacteristic(service, app.sendToSirapIPCharacteristic)
 		evothings.ble.writeCharacteristic(
 			app.connectedDevice,
 			characteristic,
-			meosIPArray,
+			sirapIPArray,
 			callback,
 			function(error) {
-				app.meosErrorBar.show({
-					html: 'Error saving Meos settings (IP): ' + error
+				app.sirapErrorBar.show({
+					html: 'Error saving Sirap settings (IP): ' + error
 				});
 			}
 		);
 	}
 };
 
-app.ui.displaySendToMeosIP = function(meosIP)
+app.ui.displaySendToSirapIP = function(sirapIP)
 {
-	var meosIPString = new TextDecoder("utf-8").decode(meosIP);
-	app.ui.meos.sendToMeosIP = meosIPString;
-	console.log('meos ip: ' + meosIPString);
-	$("#sendtomeosip").val(meosIPString);
+	console.log("displaySendToSirapIP");
+	var sirapIPString = '';
+	if (typeof sirapIP === 'string') {
+		sirapIPString = sirapIP;
+	} else {
+		var sirapIPString = new TextDecoder("utf-8").decode(sirapIP);
+	}
+	app.ui.sirap.sendToSirapIP = sirapIPString;
+	console.log('sirap ip: ' + sirapIPString);
+	$("#sendtosirapip").val(sirapIPString);
 	app.ui.updateBackgroundColor();
 };
 
-//-- Send to Meos ip port
-app.getSendToMeosIPPort = function(callback)
+//-- Send to Sirap ip port
+app.getSendToSirapIPPort = function(callback)
 {
-	console.log('getSendToMeosIPPort');
-	var service = evothings.ble.getService(app.connectedDevice, app.meosService);
-	var characteristic = evothings.ble.getCharacteristic(service, app.sendToMeosIPPortCharacteristic);
+	console.log('getSendToSirapIPPort');
+	var service = evothings.ble.getService(app.connectedDevice, app.sirapService);
+	var characteristic = evothings.ble.getCharacteristic(service, app.sendToSirapIPPortCharacteristic);
 	evothings.ble.readCharacteristic(
         	app.connectedDevice,
         	characteristic,
@@ -647,8 +691,8 @@ app.getSendToMeosIPPort = function(callback)
 			callback(data);
 		},
 		function(error) {
-			app.meosErrorBar.show({
-				html: 'Error getting Meos settings (Port): ' + error
+			app.sirapErrorBar.show({
+				html: 'Error getting Sirap settings (Port): ' + error
 			});
 		}
 	);
@@ -656,49 +700,76 @@ app.getSendToMeosIPPort = function(callback)
 
 
 
-app.ui.getSendToMeosIPPort = function() {
-	var meosIPPort = $("#sendtomeosipport").val();
-	meosIPPortInteger = parseInt(meosIPPort);
-	console.log("meosIPPortInteger: " + meosIPPortInteger);
-	if (app.isNumber(meosIPPortInteger)) {
-		return meosIPPortInteger;
+app.ui.getSendToSirapIPPort = function() {
+	var sirapIPPort = $("#sendtosirapipport").val();
+	sirapIPPortInteger = parseInt(sirapIPPort);
+	console.log("sirapIPPortInteger: " + sirapIPPortInteger);
+	if (app.isNumber(sirapIPPortInteger)) {
+		return sirapIPPortInteger;
 	}
 	return 0;
 };
 
-app.writeSendToMeosIPPort = function(callback, errorCallback)
+app.writeSendToSirapIPPort = function(callback, errorCallback)
 {
-	console.log('write meos ip port');
-	var meosIPPort = app.ui.getSendToMeosIPPort();
- 	if (meosIPPort == 0) {
-		app.meosErrorBar.show({
-			html: 'Meos Port must be an integer'
+	console.log('write sirap ip port');
+	var sirapIPPort = app.ui.getSendToSirapIPPort();
+ 	if (sirapIPPort == 0) {
+		app.sirapErrorBar.show({
+			html: 'Sirap Port must be an integer'
 		});
 		errorCallback();
 	} else {
-		var service = evothings.ble.getService(app.connectedDevice, app.meosService)
-		var characteristic = evothings.ble.getCharacteristic(service, app.sendToMeosIPPortCharacteristic)
+		var service = evothings.ble.getService(app.connectedDevice, app.sirapService)
+		var characteristic = evothings.ble.getCharacteristic(service, app.sendToSirapIPPortCharacteristic)
 		evothings.ble.writeCharacteristic(
 			app.connectedDevice,
 			characteristic,
-			new Uint16Array([meosIPPort]),
+			new Uint16Array([sirapIPPort]),
 			callback,
 			function(error) {
-				app.meosErrorBar.show({
-					html: 'Error saving Meos settings (Port): ' + error
+				app.sirapErrorBar.show({
+					html: 'Error saving Sirap settings (Port): ' + error
 				});
 			}
 		);
 	}
 };
 
-app.ui.displaySendToMeosIPPort = function(meosIPPort)
+app.ui.displaySendToSirapIPPort = function(sirapIPPort)
 {
-	var rawMeosIPPort = new DataView(meosIPPort).getUint16(0, true);
-	app.ui.meos.sendToMeosIPPort = rawMeosIPPort;
-	console.log('meos ip port: ' + rawMeosIPPort);
-	$("#sendtomeosipport").val(rawMeosIPPort);
+	console.log("displaySendToSirapIPPort");
+	var rawSirapIPPort = 0;
+	if (typeof sirapIPPort === 'number') {
+		rawSirapIPPort = sirapIPPort;
+	} else {
+		rawSirapIPPort = new DataView(sirapIPPort).getUint16(0, true);
+	}
+	app.ui.sirap.sendToSirapIPPort = rawSirapIPPort;
+	console.log('sirap ip port: ' + rawSirapIPPort);
+	$("#sendtosirapipport").val(rawSirapIPPort);
 	app.ui.updateBackgroundColor();
+};
+
+// get all
+app.getAll = function(callback)
+{
+	console.log('getAll');
+	var service = evothings.ble.getService(app.connectedDevice, app.miscService);
+	var characteristic = evothings.ble.getCharacteristic(service, app.miscAllCharacteristic);
+	evothings.ble.readCharacteristic(
+        	app.connectedDevice,
+        	characteristic,
+        	function(data) {
+			callback(data);
+		},
+		function(error) {
+			console.log('getAll error: ' + error);
+			app.batteryErrorBar.show({
+				html: 'Error getting all'
+			});
+		}
+	);
 };
 
 //-- Get Wifi networks
@@ -856,7 +927,12 @@ app.getIPAddress = function(callback)
 
 app.ui.displayIPAddress = function(IPAddress)
 {
-	var rawIPAddress = new TextDecoder("utf-8").decode(IPAddress);
+	var rawIPAddress = '';
+	if (typeof IPAddress === 'string') {
+		rawIPAddress = IPAddress;
+	} else {
+		rawIPAddress = new TextDecoder("utf-8").decode(IPAddress);
+	}
 	console.log('ip address: ' + rawIPAddress);
 	$("#ipaddress").text(rawIPAddress);
 };
@@ -919,6 +995,25 @@ app.ui.onRenewIPEthernet = function(event)
 	);
 };
 
+app.ui.displayAll = function(data) {
+	var allString = new TextDecoder("utf-8").decode(data);
+	all = JSON.parse(allString);
+	app.ui.displayBatteryLevel(all.battLvl)
+	app.ui.displayIsCharging(all.isCharg);
+	app.ui.displayDataRate(all.dataRate);
+	app.ui.displayChannel(all.ch);
+	app.ui.displayAcknowledgementRequested(all.ackReq);
+	app.ui.displayIPAddress(all.ip);
+	app.ui.displaySendToSirapEnabled(all.sirapEn);
+	app.ui.displaySendToSirapIP(all.sirapIP);
+	app.ui.displaySendToSirapIPPort(all.sirapIPPort);
+    app.ui.displayWiRocDeviceName(all.devName);
+};
+
+app.readAndDisplayAll = function() {
+	app.getAll(app.ui.displayAll);
+	
+};
 
 app.readBasicSettings = function() {
 	app.getBatteryLevel(app.ui.displayBatteryLevel);
@@ -937,17 +1032,15 @@ app.ui.onApplyBasicButton = function() {
         console.log('onApplyBasicButton');
 	app.writeChannel(function() {
         	console.log('writeChannel2');
-		//app.writeAcknowledgementRequested(function() {
-			app.writeDataRate(function() {
-				app.radioSuccessBar.show({
-			    		html: 'Radio settings saved'
-				});
-
-				app.getChannel(app.ui.displayChannel);
-				//app.getAcknowledgementRequested(app.ui.displayAcknowledgementRequested);
-				app.getDataRate(app.ui.displayDataRate);
+		app.writeDataRate(function() {
+			app.radioSuccessBar.show({
+		    		html: 'Radio settings saved'
 			});
-		//});
+
+			app.getChannel(app.ui.displayChannel);
+			app.getAcknowledgementRequested(app.ui.displayAcknowledgementRequested);
+			app.getDataRate(app.ui.displayDataRate);
+		});
 	});
 };
 
@@ -966,31 +1059,36 @@ app.ui.onApplyRadioAdvButton = function() {
 	});
 };
 
-app.readMeosSettings = function() {
+app.readRadioAdvSettings = function() {
+	app.getAcknowledgementRequested(app.ui.displayAcknowledgementRequested);
+};
+// Sirap
+
+app.readSirapSettings = function() {
 	app.getBatteryLevel(app.ui.displayBatteryLevel);
-	app.getSendToMeosEnabled(app.ui.displaySendToMeosEnabled);
-	app.getSendToMeosIP(app.ui.displaySendToMeosIP);
-	app.getSendToMeosIPPort(app.ui.displaySendToMeosIPPort);
+	app.getSendToSirapEnabled(app.ui.displaySendToSirapEnabled);
+	app.getSendToSirapIP(app.ui.displaySendToSirapIP);
+	app.getSendToSirapIPPort(app.ui.displaySendToSirapIPPort);
 };
 
-app.ui.onReadMeosButton = function() {
-	app.readMeosSettings();
+app.ui.onReadSirapButton = function() {
+	app.readSirapSettings();
 };
 
-app.ui.onApplyMeosButton = function() {
-	app.writeSendToMeosEnabled(function() {
-		app.writeSendToMeosIP(function() {
-			app.writeSendToMeosIPPort(function() {
-				app.meosSuccessBar.show({
-			    		html: 'Meos settings saved'
+app.ui.onApplySirapButton = function() {
+	app.writeSendToSirapEnabled(function() {
+		app.writeSendToSirapIP(function() {
+			app.writeSendToSirapIPPort(function() {
+				app.sirapSuccessBar.show({
+			    		html: 'Sirap settings saved'
 				});
-				app.getSendToMeosEnabled(app.ui.displaySendToMeosEnabled);
-				app.getSendToMeosIP(app.ui.displaySendToMeosIP);
-				app.getSendToMeosIPPort(app.ui.displaySendToMeosIPPort);
+				app.getSendToSirapEnabled(app.ui.displaySendToSirapEnabled);
+				app.getSendToSirapIP(app.ui.displaySendToSirapIP);
+				app.getSendToSirapIPPort(app.ui.displaySendToSirapIPPort);
 			}, function() {
-				app.getSendToMeosEnabled(app.ui.displaySendToMeosEnabled);
-				app.getSendToMeosIP(app.ui.displaySendToMeosIP);
-				app.getSendToMeosIPPort(app.ui.displaySendToMeosIPPort);
+				app.getSendToSirapEnabled(app.ui.displaySendToSirapEnabled);
+				app.getSendToSirapIP(app.ui.displaySendToSirapIP);
+				app.getSendToSirapIPPort(app.ui.displaySendToSirapIPPort);
 			});
 		});
 	});
@@ -1002,6 +1100,77 @@ app.ui.onGetNetworkWifiListButton = function() {
 	app.getNetworkWifiList(app.ui.displayNetworkWifiList);
 };
 
+app.getDeviceFromBackend = function(btAddress, callback) {
+	var url = "http://wirelessradioonlinecontrol.tk/api/v1/Devices/LookupDeviceByBTAddress/" + encodeURI(btAddress);
+	console.log(url);
+	if (window.cordova) {
+		// do something cordova style
+		console.log('getDeviceFromBackend: ' + btAddress);
+		cordovaHTTP.get(
+		   url,
+		   {},
+		   { Authorization: app.backendApiKey },
+		   function (response) {
+			  if (response) {
+				 console.log('getDeviceFromBackend response: ' + response.data);
+				 callback(JSON.parse(response.data));
+			  }
+		   },
+		   function (error) {
+			  console.log(JSON.stringify(error));
+		   }
+		);
+	}
+	else {
+		// fallback to web methods
+		return fetch(url,
+		{
+			credentials: 'same-origin',
+			headers: {
+			  'Accept': 'application/json',
+			  'Authorization': app.backendApiKey
+			},
+			method: "GET"
+		})
+		.then(function(res) { 
+			return res.json();
+		})
+		.catch(function(res){ console.log(res) });
+	}
+};
+
+app.saveDeviceToBackend = function(backendJsonDevice) {
+	if (window.cordova) {
+		// do something cordova style
+		console.log('saveDeviceToBackend');
+		cordovaHTTP.get(
+		   "http://wirelessradioonlinecontrol.tk/api/v1/Devices/" + backendJsonDevice.id + "/UpdateDeviceName/" + backendJsonDevice.name, 
+		   backendJsonDevice,
+		   { Authorization: app.backendApiKey },
+		   function (response) {
+			   console.log(response.data);
+		   },
+		   function (error) {
+			  console.log(JSON.stringify(error));
+		   }
+		);
+	}
+	else {
+		return fetch("http://wirelessradioonlinecontrol.tk/api/v1/Devices/" + backendJsonDevice.id,
+		{
+			credentials: 'same-origin',
+			headers: {
+			  'Accept': 'application/json',
+			  'Authorization': app.backendApiKey
+			},
+			method: "PUT",
+			body: JSON.stringify( backendJsonDevice )
+		})
+		.catch(function(res){ console.log(res) });
+	}
+};
+
+
 // Device name
 app.ui.onApplyDeviceNameButton = function()
 {
@@ -1011,12 +1180,51 @@ app.ui.onApplyDeviceNameButton = function()
 		app.miscDeviceNameSuccessBar.show({
 			html: 'Device name saved (reboot required)'
 		});
-		app.getWiRocSettings(app.ui.displayWiRocSettings);
+		// save to backend
+		app.getDeviceFromBackend(app.connectedDevice.address, function(backendJsonDevice) {
+			if (backendJsonDevice) {
+				backendJsonDevice.name = devName;
+				app.saveDeviceToBackend(backendJsonDevice);
+			}
+		});
+		app.getWiRocDeviceName(app.ui.displayWiRocDeviceName);
 	}, function(error) {
 		app.miscDeviceNameErrorBar.show({
 			html: 'Error saving device name: ' + error,
 		});
 	});
+};
+
+app.getWiRocDeviceName = function(callback) {
+	console.log('getWiRocDeviceName');
+	var service = evothings.ble.getService(app.connectedDevice, app.miscService);
+	var characteristic = evothings.ble.getCharacteristic(service, app.miscDeviceNameCharacteristic);
+	evothings.ble.readCharacteristic(
+        	app.connectedDevice,
+        	characteristic,
+        	function(data) {
+			callback(data);
+		},
+		function(error) {
+			console.log('getWiRocDeviceName error');
+			app.miscDeviceNameErrorBar.show({
+				html: 'Error getting device name: ' + error
+			});
+		}
+	);
+};
+
+app.ui.displayWiRocDeviceName = function(deviceName) {
+	var raw = '';
+	if (typeof deviceName === 'string') {
+		raw = deviceName;
+	} else {
+		raw = new TextDecoder("utf-8").decode(deviceName);
+	}
+	app.ui.misc.deviceName = raw;
+	console.log('device name: ' + raw);
+	$('#wirocdevicename').val(raw);
+	app.ui.updateBackgroundColor();
 };
 
 app.ui.getWiRocDeviceName = function()
@@ -1027,7 +1235,7 @@ app.ui.getWiRocDeviceName = function()
 
 app.ui.onReadDeviceNameButton = function()
 {
-	app.getWiRocSettings(app.ui.displayWiRocSettings);
+	app.getWiRocDeviceName(app.ui.displayWiRocDeviceName);
 };
 
 // Status
@@ -1220,6 +1428,15 @@ app.ui.displayWiRocSettings = function(settings) {
 app.ui.onRefreshSettingsButton = function() {
 	$('#wiroc-settings-content').html('');
 	app.getWiRocSettings(app.ui.displayWiRocSettings);
+};
+
+app.ui.onAddSetting = function(event)
+{
+	$('#settingKey').val('');
+	$('#settingValue').val('');
+	$('#popupAddEditSetting').data('Key', '');
+	$('#popupAddEditSetting').data('Value', '');
+	$('#popupAddEditSetting').popup('open');
 };
 
 app.ui.onEditSetting = function(event)
@@ -1583,13 +1800,10 @@ app.ui.onSendTestPunchesButton = function(event) {
 	);
 };
 
+
 app.connect = function(device)
 {
-        evothings.ble.stopScan()
-	app.ui.displayStatus('Scan Paused');
-	clearInterval(app.ui.updateTimer);
-
-	$('#wiroc-status-content').html('');
+    $('#wiroc-status-content').html('');
 	$('#wiroc-services-content').html('');
 	$('#wiroc-settings-content').html('');
 	$("#wiroc-punches-table tbody").html('');
@@ -1605,7 +1819,7 @@ app.connect = function(device)
 	setTimeout(
 		function()
 		{
-                        console.log('connect('+device.address+')');
+            console.log('connect('+device.address+')');
 			evothings.ble.connectToDevice(
 			device,
 			app.onConnected,
@@ -1613,15 +1827,15 @@ app.connect = function(device)
 			app.onConnectError,
 			{ discoverServices: true });
 		},
-	500);
-        
+	600);      
 };
 
 
 // Called when device is connected.
 app.onConnected = function(device)
 {
-    	console.log('Connected to device');
+	console.log('Connected to device');
+	app.stopScan();
 	app.devices = {};
 	app.ui.displayDeviceList();
 
@@ -1631,16 +1845,20 @@ app.onConnected = function(device)
 	$('#wirocdevicename').val(device.name);
 	$('#tab-radio').css('ui-btn-active');
 	$('#tab-radio').trigger('click');
-	app.readBasicSettings();
+	app.readAndDisplayAll();
 };
+
 
 // Called if device disconnects.
 app.onDisconnected = function(device)
 {
 	console.log('Disconnected from device');
+	app.stopScan();
+	evothings.ble.close(app.devices[app.btAddressToConnect]);
+	
 	app.connectedDevice = null;
 	$.mobile.pageContainer.pagecontainer("change", "#page-device-scan", { });
-	evothings.ble.reset(function() { console.log('reset success'); },function() { console.log('reset fail'); });
+	evothings.ble.reset(function() { console.log('reset success 1'); },function() { console.log('reset fail'); });
 	app.searchDevicesErrorBar.show({
 		html: 'Device disconnected'
 	});
@@ -1650,12 +1868,11 @@ app.onDisconnected = function(device)
 // Called when a connect error occurs.
 app.onConnectError = function(error)
 {
+	app.stopScan();
+
     app.connectErrorCount++;
     console.log('Connect error: ' + error);
-    app.searchDevicesErrorBar.show({
-		html: 'Connect error: ' + error
-    });
-    
+  
     
     // If we get Android connect error 133, we wait and try to connect again.
     // This can resolve connect problems on Android when error 133 is seen.
@@ -1665,17 +1882,25 @@ app.onConnectError = function(error)
     // update the UI of the app.
     if (133 == error && app.connectErrorCount <=2)
     {
+		app.searchDevicesErrorBar.show({
+			html: 'Connect error: ' + error + ' | Retrying...'
+		});
         console.log('Reconnecting...');
         evothings.ble.close(app.devices[app.btAddressToConnect]);
-	setTimeout(
+		setTimeout(
              function() 
              { 
                 app.connect(app.devices[app.btAddressToConnect]); 
              }
              ,1000);
     } else {
-        app.connectErrorCount = 0;
-        evothings.ble.reset(function() { console.log('reset success'); },function() { console.log('reset fail'); });
+		app.searchDevicesErrorBar.show({
+			html: 'Connect error: ' + error + ' | Reseting BT'
+		});
+		app.connectErrorCount = 0;
+		app.devices = {};
+		app.ui.displayDeviceList();
+        evothings.ble.reset(function() { console.log('reset success 2'); },function() { console.log('reset fail'); });
     }
 };
 
@@ -1685,7 +1910,8 @@ app.disconnect = function()
 		console.log('disconnect');
 		evothings.ble.close(app.connectedDevice);
 		app.connectedDevice = null;
-	}	
+		evothings.ble.reset(function() { console.log('reset success 3'); },function() { console.log('reset fail'); });
+	}
 };
 
 app.initialize();
