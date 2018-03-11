@@ -221,7 +221,7 @@ app.ui.displayDeviceList = function()
 				+     '<tr>'
 				+       '<td style="white-space:nowrap;">Signal ' + device.rssi + ' dBm</td>'
 				+       '<td style="background:rgb(150,150,150);margin:0px;padding:4px">'
-				+          '<div style="background:rgb(225,0,0);height:20px;width:'+rssiWidth+'%;"></div>'
+				+          '<div style="background:#3388cc;height:20px;width:'+rssiWidth+'%;"></div>'
 				+       '</td>'
 				+     '</tr>'
 				+   '</table>'
