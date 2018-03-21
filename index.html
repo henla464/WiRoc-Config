@@ -60,11 +60,42 @@
     		margin-top:0px;
     	}
     	
+    	
+    	/* Visible power */
+    	#lorapower-select-button span {
+    		font-size: 4vw;
+    		font-weight: normal;
+    	}
+    	/* Lora power list */
+    	#lorapower-select-menu li a {
+    		font-size: 4vw;
+    		padding-top:0.5em;
+    		padding-bottom:0.5em;
+    	}
+    	
+    	label.lorapower-header {
+			line-height: 16vw;
+    		font-size: 10vw;
+    		text-align: center;
+    		margin-bottom: -1vw;
+			height: 16vw;
+    		/*transition: font-size 1s;*/
+    	}
+	
+    	.ui-select {
+    		margin-top: 0px;
+    	}
+    	.lorapower.ui-field-contain {
+    		width: 60%;
+    		margin: auto;
+    		margin-top:0px;
+    	}
+    	
     	 div.ui-controlgroup-label legend
     	 {
 			margin-left:auto;
 			margin-right:auto;
-	}
+		}
 		
 		img.header-logo {
 			display: block;
@@ -75,7 +106,7 @@
 
 		
 		
-    		.ui-mobile [data-role=page] {
+    	.ui-mobile [data-role=page] {
 			position: inherit;
 		}
 		
@@ -373,8 +404,6 @@
 			var advTabHeaderHeight = $('#page-advanced-config div[data-role="navbar"]').actual('outerHeight', { includeMargin : true });
 			var tabControlPaddingHeight = (0.2*16); // 0.2 em, 16px font
 			var tabContentPaddingHeight = (2*document.documentElement.clientWidth) / 100;
-			console.log(viewPortHeight);
-			console.log(scanHeaderHeight);
 			$('#page-device-scan div[role="main"]').css({'min-height': (viewPortHeight - scanHeaderHeight) + 'px'});
 			$('#page-basic-config div[role="main"]').css({'min-height': (viewPortHeight - basicHeaderHeight) + 'px'});
 			$('#page-advanced-config div[role="main"]').css({'min-height': (viewPortHeight - advHeaderHeight) + 'px'});
@@ -416,6 +445,7 @@
 			app.miscRadioAdvSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio-adv'), autohide: true, backgroundColor: '#99ff99' });
 
 			app.searchDevicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-search-devices'), autohide: true, backgroundColor: '#ffbf00' });
+			app.searchDevicesInfoBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-search-devices'), autohide: true, backgroundColor: '#41e8eb' });
 			app.batteryErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#ffbf00' });
 			app.radioErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#ffbf00' });
 			app.sirapErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-sirap'), autohide: true, backgroundColor: '#ffbf00' });
@@ -487,6 +517,10 @@
 				app.ui.updateBackgroundColor();
 			});
 			$('#wirocdevicename').on("input propertychange paste", function(event, ui) {
+				app.ui.updateBackgroundColor();
+			});
+			
+			$("#lorapower-select").on( "change", function(event, ui) {
 				app.ui.updateBackgroundColor();
 			});
 
@@ -588,7 +622,7 @@
 				<h1>WiRoc Config</h1>
 
 				<table>
-					<tr><td>Version</td><td>0.1.7</td></tr>
+					<tr><td>Version</td><td>0.1.9</td></tr>
 					<tr><td></td><td></td></tr>
 					<tr><td></td><td></td></tr>
 					<tr><td></td><td></td></tr>
@@ -812,7 +846,7 @@
 				<h1>WiRoc Config</h1>
 
 				<table>
-					<tr><td>Version</td><td>0.1.7</td></tr>
+					<tr><td>Version</td><td>0.1.9</td></tr>
 					<tr><td></td><td></td></tr>
 					<tr><td></td><td></td></tr>
 					<tr><td></td><td></td></tr>
@@ -830,7 +864,7 @@
 					<li data-tabname="services"><a href="#services" data-ajax="false" id="tab-services">Services</a></li>
 					<li data-tabname="settings"><a href="#settings" data-ajax="false" id="tab-settings">Settings</a></li>
 					<li data-tabname="punches"><a href="#punches" data-ajax="false" id="tab-punches">Punches</a></li>
-					<li data-tabname="database-adv"><a href="#database-adv" data-ajax="false" id="tab-database-adv">Database</a></li>
+					<li data-tabname="database-adv"><a href="#database-adv" data-ajax="false" id="tab-database-adv">Database &amp; Logs</a></li>
 					<li data-tabname="radio-adv"><a href="#radio-adv" data-ajax="false" id="tab-radio-adv">Radio adv.</a></li>
 					</ul>
 				</div>
@@ -840,7 +874,7 @@
 						<label for="sendtosirapip">Device Name:</label>
 						<input type="text" name="wirocdevicename" id="wirocdevicename">
 					</div>
-					<div style="text-align:left">
+					<div style="text-align:center">
 						<div style="display:inline-block">
 							<a href="#" onclick="app.ui.onReadDeviceNameButton()" class="ui-btn ui-btn-inline ui-corner-all">Read</a>
 							<a href="#" onclick="app.ui.onApplyDeviceNameButton()" class="ui-btn ui-btn-inline ui-corner-all">Save</a>
@@ -901,9 +935,10 @@
 				</div>
 				<div id="database-adv" class="ui-body-d ui-content" style="padding:2vw">
 					<div id="notification-database-adv" style="height:1px"></div>
-					<div style="text-align:left">
+					<div style="text-align:center">
 						<div style="display:inline-block">
 							<a href="#" onclick="app.ui.onDropAllTablesButton()" data-subscribe="true" id="btnDropAllTables" class="ui-btn ui-btn-inline ui-corner-all">Drop all database tables</a>
+							<a href="#" onclick="app.ui.onUploadDatabaseAndLogsButton()" data-subscribe="true" id="btnUploadDatabaseAndLogs" class="ui-btn ui-btn-inline ui-corner-all">Upload database and logs</a>
 						</div>
 					</div>
 				</div>
@@ -911,6 +946,17 @@
 					<div id="notification-radio-adv" style="height:1px"></div>
 					<div id="acknowledge-div">
 		 				<label><input type="checkbox" id="acknowledgement">Request acknowledgement</label>
+					</div>
+					<div class="ui-field-contain lorapower">
+						<select name="lorapower" id="lorapower-select" data-native-menu="false">
+							<option value="1">4dBm</option>
+							<option value="2">7dBm</option>
+							<option value="3">10dBm</option>
+							<option value="4">13dBm</option>
+							<option value="5">14dBm (&le;11 el. Yagi)</option>
+							<option value="6">17dBm (&le;7 el. Yagi)</option>
+							<option value="7" selected>20dBm (&le;4 el. Yagi)</option>
+						</select>
 					</div>
 					<div style="text-align:center">
 						<div style="display:inline-block">
