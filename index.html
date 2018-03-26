@@ -423,14 +423,13 @@
 			$('#punches').css({'min-height': (viewPortHeight - advHeaderHeight -  advTabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
 			$('#database-adv').css({'min-height': (viewPortHeight - advHeaderHeight -  advTabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
 			$('#radio-adv').css({'min-height': (viewPortHeight - advHeaderHeight -  advTabHeaderHeight -2*tabControlPaddingHeight-2*tabContentPaddingHeight) + 'px'});
-
 			
 
 			var menuButtonWidth = $('#menu-right').actual('outerWidth', { includeMargin : true });
 			var distanceBetweenBatteryAndMenu = 3+(2*document.documentElement.clientWidth) / 100;
 			$('.battery-indicator').css({'right': (menuButtonWidth+distanceBetweenBatteryAndMenu) + 'px'});
-                }
-
+        }
+		
 		$(document).ready(function() {
 			app.networkInfoBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-network'), autohide: true, backgroundColor: '#80d4ff' });
 
@@ -443,9 +442,11 @@
 			app.miscDatabaseAdvSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database-adv'), autohide: true, backgroundColor: '#99ff99' });
 			app.miscTestPunchesSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-test'), autohide: true, backgroundColor: '#99ff99' });
 			app.miscRadioAdvSuccessBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio-adv'), autohide: true, backgroundColor: '#99ff99' });
-
-			app.searchDevicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-search-devices'), autohide: true, backgroundColor: '#ffbf00' });
+			
+			app.miscUpdateInfoBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-update-adv'), autohide: true, backgroundColor: '#41e8eb' });
 			app.searchDevicesInfoBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-search-devices'), autohide: true, backgroundColor: '#41e8eb' });
+			
+			app.searchDevicesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-search-devices'), autohide: true, backgroundColor: '#ffbf00' });
 			app.batteryErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#ffbf00' });
 			app.radioErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio'), autohide: true, backgroundColor: '#ffbf00' });
 			app.sirapErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-sirap'), autohide: true, backgroundColor: '#ffbf00' });
@@ -458,10 +459,13 @@
 			app.miscDatabaseAdvErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-database-adv'), autohide: true, backgroundColor: '#ffbf00' });
 			app.miscTestPunchesErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-test'), autohide: true, backgroundColor: '#ffbf00' });
 			app.miscRadioAdvErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-radio-adv'), autohide: true, backgroundColor: '#ffbf00' });
+			app.miscUpdateErrorBar = new $.peekABar({ jqObjToAddBarTo: $('div#notification-update-adv'), autohide: true, backgroundColor: '#ffbf00' });
+			
 			
 			$('#wifiConnect').click(app.ui.onWifiPasswordConnectButton);
 			$('#saveSettingButton').click(app.ui.onEditSettingSaveButton);
 			
+
 			$(":mobile-pagecontainer").on( "pagecontainerbeforechange", function( event, ui ) {
 				if (typeof ui.toPage == "object") {
 					var urlArray = ui.absUrl.split("#");
@@ -477,6 +481,8 @@
 						app.disconnect();
 					} else if (toPageName == "page-advanced-config") 
 					{
+						app.ui.displayUpdateWiRocPython();
+						app.ui.displayUpdateWiRocBLE();
 						if (app.advancedConfigTab == null) {
 							setTimeout(function(){ $('#tab-devicename').trigger('click'); }, 500);
 						} else {
@@ -581,7 +587,7 @@
 		
  		<div role="main" class="ui-content" class="page" style="padding:0">
 			<div id="notification-search-devices" style="height:0px"></div>
-			<!--<a href="#page-basic-config" data-transition="slide">Slide</a>-->
+			<a href="#page-basic-config" data-transition="slide">Slide</a>
 			<a href="#" onclick="app.ui.onScanButton()" class="ui-btn ui-btn-inline ui-corner-all scan-button">Start scan</a>
 	
 			<p id="scan-status" class="scan-status">Not scanning</p>
@@ -866,6 +872,7 @@
 					<li data-tabname="punches"><a href="#punches" data-ajax="false" id="tab-punches">Punches</a></li>
 					<li data-tabname="database-adv"><a href="#database-adv" data-ajax="false" id="tab-database-adv">Database &amp; Logs</a></li>
 					<li data-tabname="radio-adv"><a href="#radio-adv" data-ajax="false" id="tab-radio-adv">Radio adv.</a></li>
+					<li data-tabname="update-adv"><a href="#update-adv" data-ajax="false" id="tab-radio-adv">Update</a></li>
 					</ul>
 				</div>
 				<div id="devicename" class="ui-body-d ui-content" style="padding:2vw">
@@ -965,7 +972,17 @@
 						</div>
 					</div>
 				</div>
-
+				<div id="update-adv" class="ui-body-d ui-content" style="padding:2vw">
+					<div id="notification-update-adv" style="height:1px"></div>
+					<div class="ui-field-contain updatewirocpython">
+						<label for="wirocpythonversions">WiRoc version:</label>
+					</div>
+					<a href="#" onclick="app.ui.onUpdateWiRocPython()" data-subscribe="true" id="btnUpdateWiRocPython" class="ui-btn ui-corner-all">Update WiRoc</a>
+					<div class="ui-field-contain updatewirocble">
+						<label for="wirocbleversions">WiRoc BLE version:</label>
+					</div>
+					<a href="#" onclick="app.ui.onUpdateWiRocBLE()" data-subscribe="true" id="btnUpdateWiRocBLE" class="ui-btn ui-corner-all">Update WiRoc BLE</a>
+				</div>
 			</div>
 		</div>
 	</div>

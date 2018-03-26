@@ -33,6 +33,8 @@ app.miscRadioAdvErrorBar = null;
 app.miscRadioAdvSuccessBar = null;
 app.miscTestPunchesSuccessBar = null;
 app.miscTestPunchesErrorBar = null;
+app.miscUpdateErrorBar = null;
+app.miscUpdateInfoBar = null;
 
 
 app.radioService = 'f6026b69-9254-fd82-0242-60d9aaff57dc';
@@ -65,6 +67,7 @@ app.miscBatteryCharacteristic = 		'fb880908-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscAllCharacteristic = 			'fb880909-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscDeviceNameCharacteristic =		'fb88090a-4ab2-40a2-a8f0-14cc1c2e5608';
 app.miscLogArchivesCharacteristic =		'fb88090b-4ab2-40a2-a8f0-14cc1c2e5608';
+app.miscUpdateCharacteristic =		'fb88090c-4ab2-40a2-a8f0-14cc1c2e5608';
 
 app.isScanning = false;
 app.backendApiKey = '67f11087-32c5-4dc5-9987-bbdecb028d36';
@@ -521,6 +524,258 @@ app.writePower = function(callback)
 	);
 };
 
+//-- Update WiRoc Python
+
+app.ui.onUpdateWiRocPython = function(event)
+{
+	app.writeUpdateWiRocPython(function() {
+		app.miscUpdateInfoBar.show({
+    		html: 'Sent update command'
+		});
+	});
+};
+
+app.getWiRocPythonVersionsFromGithub = function() {
+	var url = 'https://api.github.com/repos/henla464/WiRoc-Python-2/releases';
+	return fetch(url,
+		{
+			credentials: 'same-origin',
+			headers: {
+			  'Accept': 'application/json'
+			},
+			method: "GET"
+		})
+		.then(function(res) { 
+			console.log('get versions');
+			return res.json();
+		}).then(function (versionsJson) {
+			var versionsArray = [];
+			for (var i = 0; i < 5; i++) {
+				versionsArray.push(versionsJson[i].tag_name);
+			}
+			return versionsArray;
+		})
+		.catch(function(res){ console.log(res) });
+};
+
+app.getWiRocPythonLatestVersionFromGithub = function() {
+	var url = 'https://api.github.com/repos/henla464/WiRoc-Python-2/releases/latest';
+	return fetch(url,
+		{
+			credentials: 'same-origin',
+			headers: {
+			  'Accept': 'application/json',
+			},
+			method: "GET"
+		})
+		.then(function(res) { 
+			console.log('get latest');
+			return res.json();
+		}).then(function (versionObj) {
+			if (versionObj.tag_name) {
+				return versionObj.tag_name;
+			}
+			return null;
+		})
+		.catch(function(res){ console.log(res) });
+};
+
+
+app.ui.displayUpdateWiRocPython = function()
+{
+	console.log("displayWiRocPython");
+	// load content
+	var latestPromise = app.getWiRocPythonLatestVersionFromGithub();
+	latestPromise.then(function(latest) {
+		console.log(latest);
+		var versionsPromise = app.getWiRocPythonVersionsFromGithub();
+		versionsPromise.then(function(versions) {
+			console.log(versions);
+			var versionOptions = [];
+			$.each(versions, function(index, version) {
+				if (version != latest) {
+					versionOptions.push('<option value="' +version+ '">'+version+' developer release</option>');
+				}
+			});
+			
+			$("#wirocpythonversions-select").remove().end();
+			var selectpython = $("<select name=\"wirocpythonversions\" id=\"wirocpythonversions-select\" data-native-menu=\"true\"></select>");
+			selectpython.find('option').remove().end();
+			if (latest != null) {
+				var latestOpt = '<option value="' +latest+ '">'+latest+' Official release</option>';
+				$(latestOpt).appendTo(selectpython);
+			}
+			
+			$.each(versionOptions, function(index, versionOpt) {
+				$(versionOpt).appendTo(selectpython);
+			});
+			
+			var parentDiv = $("div.updatewirocpython");
+			selectpython.appendTo(parentDiv);
+			// jQM refresh
+			if( selectpython.data("mobile-selectmenu") === undefined) {
+				// not initialized yet, lets do so
+				console.log("init selectmenu python");
+				selectpython.selectmenu({ nativeMenu: false });
+			}
+			selectpython.selectmenu("refresh", true);
+		});
+	});
+};
+
+app.ui.getUpdateWiRocPython = function() {
+	var value = $("#wirocpythonversions-select option:selected").val();
+	return value;
+};
+
+app.writeUpdateWiRocPython = function(callback)
+{
+    console.log('writeUpdateWiRocPython');
+	var version = app.ui.getUpdateWiRocPython();
+	console.log('version: '+version);
+	var te = new TextEncoder("utf-8").encode('wirocpython;' + version);
+	var typeAndVersionArray = new Uint8Array(te);
+	var service = evothings.ble.getService(app.connectedDevice, app.miscService)
+	var characteristic = evothings.ble.getCharacteristic(service, app.miscUpdateCharacteristic)
+	evothings.ble.writeCharacteristic(
+		app.connectedDevice,
+		characteristic,
+		typeAndVersionArray,
+		callback,
+		function(error) {
+			console.log('writeWiRocPython error: ' + error);
+			app.updateErrorBar.show({
+				html: 'Error sending Update: ' + error
+			});
+		}
+	);
+};
+
+//-- Update WiRoc BLE
+
+app.ui.onUpdateWiRocBLE = function(event)
+{
+	app.writeUpdateWiRocBLE(function() {
+		app.miscUpdateInfoBar.show({
+    		html: 'Sent update command'
+		});
+	});
+};
+
+app.getWiRocBLEVersionsFromGithub = function() {
+	var url = 'https://api.github.com/repos/henla464/WiRoc-BLE-Device/releases';
+	return fetch(url,
+		{
+			credentials: 'same-origin',
+			headers: {
+			  'Accept': 'application/json'
+			},
+			method: "GET"
+		})
+		.then(function(res) { 
+			console.log('get versions');
+			return res.json();
+		}).then(function (versionsJson) {
+			var versionsArray = [];
+			for (var i = 0; i < 5; i++) {
+				versionsArray.push(versionsJson[i].tag_name);
+			}
+			return versionsArray;
+		})
+		.catch(function(res){ console.log(res); });
+};
+
+app.getWiRocBLELatestVersionFromGithub = function() {
+	var url = 'https://api.github.com/repos/henla464/WiRoc-BLE-Device/releases/latest';
+	return fetch(url,
+		{
+			credentials: 'same-origin',
+			headers: {
+			  'Accept': 'application/json',
+			},
+			method: "GET"
+		})
+		.then(function(res) { 
+			console.log('get latest');
+			return res.json();
+		}).then(function (versionObj) {
+			if (versionObj.tag_name) {
+				return versionObj.tag_name;
+			}
+			return null;
+		})
+		.catch(function(){ console.log('error fetching latest ble'); });
+};
+
+app.ui.displayUpdateWiRocBLE = function(versions)
+{
+	console.log("displayWiRocBLE");
+
+	// load content
+	var latestPromise = app.getWiRocBLELatestVersionFromGithub();
+	latestPromise.then(function(latest) {
+		console.log(latest);
+		var versionsPromise = app.getWiRocBLEVersionsFromGithub();
+		versionsPromise.then(function(versions) {
+			console.log(versions);
+			var versionOptions = [];
+			$.each(versions, function(index, version) {
+				if (version != latest) {
+					versionOptions.push('<option value="' +version+ '">'+version+' developer release</option>');
+				}
+			});
+						
+			$("#wirocbleversions-select").remove().end();
+			var selectble = $("<select name=\"wirocbleversions\" id=\"wirocbleversions-select\" data-native-menu=\"true\"></select>");
+			selectble.find('option').remove().end();
+			if (latest != null) {
+				var latestOpt = '<option value="' +latest+ '">'+latest+' Official release</option>';
+				$(latestOpt).appendTo(selectble);
+			}
+			
+			$.each(versionOptions, function(index, versionOpt) {
+				$(versionOpt).appendTo(selectble);
+			});
+			
+			var parentDiv = $("div.updatewirocble");
+			selectble.appendTo(parentDiv);
+			// jQM refresh
+			if( selectble.data("mobile-selectmenu") === undefined) {
+				// not initialized yet, lets do so
+				console.log("init selectmenu ble");
+				selectble.selectmenu({ nativeMenu: false });
+			}
+			selectble.selectmenu("refresh", true);
+		});
+	});
+};
+
+app.ui.getUpdateWiRocBLE = function() {
+	var value = $("#wirocbleversions-select option:selected").val();
+	return value;
+};
+
+app.writeUpdateWiRocBLE = function(callback)
+{
+    console.log('writeWiRocBLE');
+	var version = app.ui.getUpdateWiRocBLE();
+	var te = new TextEncoder("utf-8").encode('wirocble;' + version);
+	var typeAndVersionArray = new Uint8Array(te);
+	var service = evothings.ble.getService(app.connectedDevice, app.miscService)
+	var characteristic = evothings.ble.getCharacteristic(service, app.miscUpdateCharacteristic)
+	evothings.ble.writeCharacteristic(
+		app.connectedDevice,
+		characteristic,
+		typeAndVersionArray,
+		callback,
+		function(error) {
+			console.log('writeWiRocBLE error: ' + error);
+			app.updateErrorBar.show({
+				html: 'Error sending update: ' + error
+			});
+		}
+	);
+};
 
 //-- Battery
 
