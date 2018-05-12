@@ -535,9 +535,34 @@ app.ui.onUpdateWiRocPython = function(event)
 	});
 };
 
-app.getWiRocPythonVersionsFromGithub = function() {
+app.getWiRocPythonVersionsFromGithub = function(callback) {
 	var url = 'https://api.github.com/repos/henla464/WiRoc-Python-2/releases';
-	return fetch(url,
+	if (window.cordova) {
+		// do something cordova style
+		cordovaHTTP.get(
+		   url,
+		   {},
+		   { Accept: 'application/json',
+			credentials: 'same-origin' },
+		   function (response) {
+			  if (response) {
+				console.log('get python versions: ' + response.data);
+				versionsJson = JSON.parse(response.data);
+				var versionsArray = [];
+				for (var i = 0; i < 5; i++) {
+					versionsArray.push(versionsJson[i].tag_name);
+				}
+				callback(versionsArray);
+				return;
+			  }
+			callback(null);
+		   },
+		   function (error) {
+			  console.log(JSON.stringify(error));
+		   }
+		);
+	} else {
+		return fetch(url,
 		{
 			credentials: 'same-origin',
 			headers: {
@@ -556,11 +581,35 @@ app.getWiRocPythonVersionsFromGithub = function() {
 			return versionsArray;
 		})
 		.catch(function(res){ console.log(res) });
+	}
 };
 
-app.getWiRocPythonLatestVersionFromGithub = function() {
+app.getWiRocPythonLatestVersionFromGithub = function(callback) {
 	var url = 'https://api.github.com/repos/henla464/WiRoc-Python-2/releases/latest';
-	return fetch(url,
+	if (window.cordova) 
+	{
+		cordovaHTTP.get(
+		   url,
+		   {},
+		   { Accept: 'application/json',
+			credentials: 'same-origin' },
+		   function (response) {
+			if (response) {
+				console.log('get python latest version: ' + response.data);
+				latest = JSON.parse(response.data);
+				if (latest.tag_name) {
+					callback(latest.tag_name);
+					return;
+				}
+			}
+			callback(null);
+		   },
+		   function (error) {
+			  console.log(JSON.stringify(error));
+		   }
+		);
+	} else {
+		return fetch(url,
 		{
 			credentials: 'same-origin',
 			headers: {
@@ -578,6 +627,7 @@ app.getWiRocPythonLatestVersionFromGithub = function() {
 			return null;
 		})
 		.catch(function(res){ console.log(res) });
+	}
 };
 
 
@@ -585,42 +635,79 @@ app.ui.displayUpdateWiRocPython = function()
 {
 	console.log("displayWiRocPython");
 	// load content
-	var latestPromise = app.getWiRocPythonLatestVersionFromGithub();
-	latestPromise.then(function(latest) {
-		console.log(latest);
-		var versionsPromise = app.getWiRocPythonVersionsFromGithub();
-		versionsPromise.then(function(versions) {
-			console.log(versions);
-			var versionOptions = [];
-			$.each(versions, function(index, version) {
-				if (version != latest) {
-					versionOptions.push('<option value="' +version+ '">'+version+' developer release</option>');
+	if (window.cordova) {
+		app.getWiRocPythonLatestVersionFromGithub(function(latest) {
+			console.log(latest);
+			app.getWiRocPythonVersionsFromGithub(function(versions) {
+				console.log(versions);
+				var versionOptions = [];
+				$.each(versions, function(index, version) {
+					if (version != latest) {
+						versionOptions.push('<option value="' +version+ '">'+version+' developer release</option>');
+					}
+				});
+			
+				$("#wirocpythonversions-select").remove().end();
+				var selectpython = $("<select name=\"wirocpythonversions\" id=\"wirocpythonversions-select\" data-native-menu=\"true\"></select>");
+				selectpython.find('option').remove().end();
+				if (latest != null) {
+					var latestOpt = '<option value="' +latest+ '">'+latest+' Official release</option>';
+					$(latestOpt).appendTo(selectpython);
 				}
+			
+				$.each(versionOptions, function(index, versionOpt) {
+					$(versionOpt).appendTo(selectpython);
+				});
+			
+				var parentDiv = $("div.updatewirocpython");
+				selectpython.appendTo(parentDiv);
+				// jQM refresh
+				if( selectpython.data("mobile-selectmenu") === undefined) {
+					// not initialized yet, lets do so
+					console.log("init selectmenu python");
+					selectpython.selectmenu({ nativeMenu: false });
+				}
+				selectpython.selectmenu("refresh", true);
 			});
-			
-			$("#wirocpythonversions-select").remove().end();
-			var selectpython = $("<select name=\"wirocpythonversions\" id=\"wirocpythonversions-select\" data-native-menu=\"true\"></select>");
-			selectpython.find('option').remove().end();
-			if (latest != null) {
-				var latestOpt = '<option value="' +latest+ '">'+latest+' Official release</option>';
-				$(latestOpt).appendTo(selectpython);
-			}
-			
-			$.each(versionOptions, function(index, versionOpt) {
-				$(versionOpt).appendTo(selectpython);
-			});
-			
-			var parentDiv = $("div.updatewirocpython");
-			selectpython.appendTo(parentDiv);
-			// jQM refresh
-			if( selectpython.data("mobile-selectmenu") === undefined) {
-				// not initialized yet, lets do so
-				console.log("init selectmenu python");
-				selectpython.selectmenu({ nativeMenu: false });
-			}
-			selectpython.selectmenu("refresh", true);
 		});
-	});
+	} else {
+		var latestPromise = app.getWiRocPythonLatestVersionFromGithub();
+		latestPromise.then(function(latest) {
+			console.log(latest);
+			var versionsPromise = app.getWiRocPythonVersionsFromGithub();
+			versionsPromise.then(function(versions) {
+				console.log(versions);
+				var versionOptions = [];
+				$.each(versions, function(index, version) {
+					if (version != latest) {
+						versionOptions.push('<option value="' +version+ '">'+version+' developer release</option>');
+					}
+				});
+			
+				$("#wirocpythonversions-select").remove().end();
+				var selectpython = $("<select name=\"wirocpythonversions\" id=\"wirocpythonversions-select\" data-native-menu=\"true\"></select>");
+				selectpython.find('option').remove().end();
+				if (latest != null) {
+					var latestOpt = '<option value="' +latest+ '">'+latest+' Official release</option>';
+					$(latestOpt).appendTo(selectpython);
+				}
+			
+				$.each(versionOptions, function(index, versionOpt) {
+					$(versionOpt).appendTo(selectpython);
+				});
+			
+				var parentDiv = $("div.updatewirocpython");
+				selectpython.appendTo(parentDiv);
+				// jQM refresh
+				if( selectpython.data("mobile-selectmenu") === undefined) {
+					// not initialized yet, lets do so
+					console.log("init selectmenu python");
+					selectpython.selectmenu({ nativeMenu: false });
+				}
+				selectpython.selectmenu("refresh", true);
+			});
+		});
+	}
 };
 
 app.ui.getUpdateWiRocPython = function() {
@@ -662,9 +749,34 @@ app.ui.onUpdateWiRocBLE = function(event)
 	});
 };
 
-app.getWiRocBLEVersionsFromGithub = function() {
+app.getWiRocBLEVersionsFromGithub = function(callback) {
 	var url = 'https://api.github.com/repos/henla464/WiRoc-BLE-Device/releases';
-	return fetch(url,
+	if (window.cordova) {
+		// do something cordova style
+		cordovaHTTP.get(
+		   url,
+		   {},
+		   { Accept: 'application/json',
+			credentials: 'same-origin' },
+		   function (response) {
+			  if (response) {
+				console.log('get ble versions: ' + response.data);
+				versionsJson = JSON.parse(response.data);
+				var versionsArray = [];
+				for (var i = 0; i < 5; i++) {
+					versionsArray.push(versionsJson[i].tag_name);
+				}
+				callback(versionsArray);
+				return;
+			  }
+			callback(null);
+		   },
+		   function (error) {
+			  console.log(JSON.stringify(error));
+		   }
+		);
+	} else {
+		return fetch(url,
 		{
 			credentials: 'same-origin',
 			headers: {
@@ -683,11 +795,36 @@ app.getWiRocBLEVersionsFromGithub = function() {
 			return versionsArray;
 		})
 		.catch(function(res){ console.log(res); });
+	}
 };
 
-app.getWiRocBLELatestVersionFromGithub = function() {
+app.getWiRocBLELatestVersionFromGithub = function(callback) {
 	var url = 'https://api.github.com/repos/henla464/WiRoc-BLE-Device/releases/latest';
-	return fetch(url,
+	if (window.cordova) {
+		// do something cordova style
+		cordovaHTTP.get(
+		   url,
+		   {},
+		   { Accept: 'application/json',
+			credentials: 'same-origin' },
+		   function (response) {
+			  if (response) {
+				console.log('get latest: ' + response.data);
+				versionObj = JSON.parse(response.data);
+				if (versionObj.tag_name) {
+					callback(versionObj.tag_name);
+					return;
+				}
+			  }
+			callback(null);
+		   },
+		   function (error) {
+			  console.log(JSON.stringify(error));
+		   }
+		);
+	}
+	else {
+		return fetch(url,
 		{
 			credentials: 'same-origin',
 			headers: {
@@ -705,49 +842,86 @@ app.getWiRocBLELatestVersionFromGithub = function() {
 			return null;
 		})
 		.catch(function(){ console.log('error fetching latest ble'); });
+	}
 };
 
 app.ui.displayUpdateWiRocBLE = function(versions)
 {
 	console.log("displayWiRocBLE");
-
-	// load content
-	var latestPromise = app.getWiRocBLELatestVersionFromGithub();
-	latestPromise.then(function(latest) {
-		console.log(latest);
-		var versionsPromise = app.getWiRocBLEVersionsFromGithub();
-		versionsPromise.then(function(versions) {
-			console.log(versions);
-			var versionOptions = [];
-			$.each(versions, function(index, version) {
-				if (version != latest) {
-					versionOptions.push('<option value="' +version+ '">'+version+' developer release</option>');
-				}
-			});
+	if (window.cordova) {
+		app.getWiRocBLELatestVersionFromGithub(function(latest) {
+			console.log(latest);
+			app.getWiRocBLEVersionsFromGithub(function(versions) {
+				console.log(versions);
+				var versionOptions = [];
+				$.each(versions, function(index, version) {
+					if (version != latest) {
+						versionOptions.push('<option value="' +version+ '">'+version+' developer release</option>');
+					}
+				});
 						
-			$("#wirocbleversions-select").remove().end();
-			var selectble = $("<select name=\"wirocbleversions\" id=\"wirocbleversions-select\" data-native-menu=\"true\"></select>");
-			selectble.find('option').remove().end();
-			if (latest != null) {
-				var latestOpt = '<option value="' +latest+ '">'+latest+' Official release</option>';
-				$(latestOpt).appendTo(selectble);
-			}
+				$("#wirocbleversions-select").remove().end();
+				var selectble = $("<select name=\"wirocbleversions\" id=\"wirocbleversions-select\" data-native-menu=\"true\"></select>");
+				selectble.find('option').remove().end();
+				if (latest != null) {
+					var latestOpt = '<option value="' +latest+ '">'+latest+' Official release</option>';
+					$(latestOpt).appendTo(selectble);
+				}
 			
-			$.each(versionOptions, function(index, versionOpt) {
-				$(versionOpt).appendTo(selectble);
+				$.each(versionOptions, function(index, versionOpt) {
+					$(versionOpt).appendTo(selectble);
+				});
+			
+				var parentDiv = $("div.updatewirocble");
+				selectble.appendTo(parentDiv);
+				// jQM refresh
+				if( selectble.data("mobile-selectmenu") === undefined) {
+					// not initialized yet, lets do so
+					console.log("init selectmenu ble");
+					selectble.selectmenu({ nativeMenu: false });
+				}
+				selectble.selectmenu("refresh", true);
 			});
-			
-			var parentDiv = $("div.updatewirocble");
-			selectble.appendTo(parentDiv);
-			// jQM refresh
-			if( selectble.data("mobile-selectmenu") === undefined) {
-				// not initialized yet, lets do so
-				console.log("init selectmenu ble");
-				selectble.selectmenu({ nativeMenu: false });
-			}
-			selectble.selectmenu("refresh", true);
 		});
-	});
+	} else {
+		// load content
+		var latestPromise = app.getWiRocBLELatestVersionFromGithub();
+		latestPromise.then(function(latest) {
+			console.log(latest);
+			var versionsPromise = app.getWiRocBLEVersionsFromGithub();
+			versionsPromise.then(function(versions) {
+				console.log(versions);
+				var versionOptions = [];
+				$.each(versions, function(index, version) {
+					if (version != latest) {
+						versionOptions.push('<option value="' +version+ '">'+version+' developer release</option>');
+					}
+				});
+						
+				$("#wirocbleversions-select").remove().end();
+				var selectble = $("<select name=\"wirocbleversions\" id=\"wirocbleversions-select\" data-native-menu=\"true\"></select>");
+				selectble.find('option').remove().end();
+				if (latest != null) {
+					var latestOpt = '<option value="' +latest+ '">'+latest+' Official release</option>';
+					$(latestOpt).appendTo(selectble);
+				}
+			
+				$.each(versionOptions, function(index, versionOpt) {
+					$(versionOpt).appendTo(selectble);
+				});
+			
+				var parentDiv = $("div.updatewirocble");
+				selectble.appendTo(parentDiv);
+				// jQM refresh
+				if( selectble.data("mobile-selectmenu") === undefined) {
+					// not initialized yet, lets do so
+					console.log("init selectmenu ble");
+					selectble.selectmenu({ nativeMenu: false });
+				}
+				selectble.selectmenu("refresh", true);
+			});
+		});
+	}
 };
 
 app.ui.getUpdateWiRocBLE = function() {
