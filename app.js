@@ -636,24 +636,24 @@ app.ui.displayUpdateWiRocPython = function()
 	console.log("displayWiRocPython");
 	// load content
 	if (window.cordova) {
-		app.getWiRocPythonLatestVersionFromGithub(function(latest) {
-			console.log(latest);
+		//app.getWiRocPythonLatestVersionFromGithub(function(latest) {
+		//	console.log(latest);
 			app.getWiRocPythonVersionsFromGithub(function(versions) {
 				console.log(versions);
 				var versionOptions = [];
 				$.each(versions, function(index, version) {
-					if (version != latest) {
+		//			if (version != latest) {
 						versionOptions.push('<option value="' +version+ '">'+version+' developer release</option>');
-					}
+		//			}
 				});
 			
 				$("#wirocpythonversions-select").remove().end();
 				var selectpython = $("<select name=\"wirocpythonversions\" id=\"wirocpythonversions-select\" data-native-menu=\"true\"></select>");
 				selectpython.find('option').remove().end();
-				if (latest != null) {
-					var latestOpt = '<option value="' +latest+ '">'+latest+' Official release</option>';
-					$(latestOpt).appendTo(selectpython);
-				}
+		//		if (latest != null) {
+		//			var latestOpt = '<option value="' +latest+ '">'+latest+' Official release</option>';
+		//			$(latestOpt).appendTo(selectpython);
+		//		}
 			
 				$.each(versionOptions, function(index, versionOpt) {
 					$(versionOpt).appendTo(selectpython);
@@ -669,7 +669,7 @@ app.ui.displayUpdateWiRocPython = function()
 				}
 				selectpython.selectmenu("refresh", true);
 			});
-		});
+		//});
 	} else {
 		var latestPromise = app.getWiRocPythonLatestVersionFromGithub();
 		latestPromise.then(function(latest) {
